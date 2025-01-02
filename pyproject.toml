@@ -1,0 +1,13 @@
+[project]
+name = "auto-browser"
+version = "0.1.0"
+description = "An Emacs plugin for controlling the browser and accessing web pages."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "drissionpage>=4.1.0.15",
+    "lxml-html-clean>=0.4.1",
+    "readability-lxml>=0.8.1",
+    "sexpdata>=1.0.2",
+    "websocket-bridge-python>=0.0.2",
+]

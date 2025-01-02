@@ -1,0 +1,11 @@
+#+TITLE: API Reference
+
+* Abstract
+
+All Emacs functions are asynchronous. All computations are run by the Python program and execute Emacs callbacks asynchronously.
+
+* auto-browser-run-linearly
+
+(auto-browser-run-linearly LST &optional TRACE-ID)
+
+
