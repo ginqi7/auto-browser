@@ -53,9 +53,9 @@
   (let ((url (file-name-concat auto-browser-miniflux-base-url (tabulated-list-get-id))))
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,url)
+       (auto-browser-rewrite-image-to-base64)
        (auto-browser-locate-element "#main")
        (auto-browser-get-element "html")
-       (auto-browser-rewrite-image-to-base64)
        (auto-browser-miniflux-render-article)))))
 
 (defun auto-browser-miniflux-render-article (trace-id html)
@@ -121,4 +121,3 @@
 (provide 'miniflux)
 
 ;;; mini flux.el ends here
-

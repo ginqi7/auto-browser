@@ -176,6 +176,14 @@
                          trace-id
                          url-pattern))
 
+(defun auto-browser-stream-response (trace-id url-pattern callback)
+  (websocket-bridge-call "auto-browser"
+                         "stream-response"
+                         trace-id
+                         url-pattern
+                         callback))
+
+
 (defun auto-browser-render-html (html buffer)
   "Render HTML."
   (or (fboundp 'libxml-parse-html-region)
@@ -192,4 +200,3 @@
 
 (provide 'auto-browser)
 ;;; auto-browser.el ends here
-

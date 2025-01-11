@@ -46,19 +46,32 @@
      `((auto-browser-get-tab ,auto-browser-web-ai-url)
        (auto-browser-locate-element auto-browser-web-ai-input-selector)
        (auto-browser-input ,(concat prompt "\n"))
-       (auto-browser-wait-response auto-browser-web-ai-response-regexp)
        (auto-browser-show-dialogue ,prompt)))))
 
-(defun auto-browser-show-dialogue (trace-id anwser ask)
+(defun decode-base64-to-unicode (base64-str)
+  "Decode a Base64 encoded string to a Unicode string."
+  (let ((decoded-bytes (base64-decode-string base64-str)))
+    (decode-coding-string decoded-bytes 'utf-8)))
+
+(defun auto-browser-show-msg (trace-id base64-str)
+  "Show AI dialogue."
+  (with-current-buffer "*web-ai*"
+    (goto-char (point-max))
+    (let ((buffer-read-only))
+      (insert (decode-base64-to-unicode base64-str)))))
+
+(defun auto-browser-show-dialogue (trace-id prompt)
   "Show AI dialogue."
   (switch-to-buffer "*web-ai*")
   (goto-char (point-max))
   (let ((buffer-read-only))
-    (insert "# "
-            ask "\n"
-            anwser "\n")
-   (setq buffer-read-only t)
-   (markdown-mode)))
+    (insert "\n# " prompt "\n")
+    (setq buffer-read-only t)
+    (markdown-mode))
+  (auto-browser-run-linearly
+   `((auto-browser-stream-response ,auto-browser-web-ai-response-regexp "auto-browser-show-msg"))
+   trace-id))
+
 
 (provide 'web-ai)
 ;;; web-ai.el ends here
