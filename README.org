@@ -31,6 +31,12 @@ Auto Browser provides some simple APIs to control the browser and access pages a
     (add-to-list 'load-path (expand-file-name "~/.emacs.d/lisp/d/lisp/auto-browser/plugins"))
   #+END_SRC
 
+** Reuse existing browser instance
+Run Chrome with --remote-debugging-port=9222
+#+begin_src shell
+  "/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome" --remote-debugging-port=9222
+#+end_src
+
 * Configuration
 Here are a few variables that can be used for configuration:
 #+BEGIN_SRC emacs-lisp
@@ -39,3 +45,11 @@ Here are a few variables that can be used for configuration:
   (require 'miniflux) ;; Optional, If you use miniflux web.
   (require 'web-ai) ;; Optional, If you use a simple web chat AI service.
 #+end_src
+
+* Examples
+** Anki
+[[file:examples/anki.gif]]
+** Miniflux
+[[file:examples/miniflux.gif]]
+** Web AI
+[[file:examples/ai.gif]]
