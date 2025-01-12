@@ -25,36 +25,65 @@
 ;;; Code:
 
 (require 'dom)
+(require 'seq)
 
 (defun auto-browser-dom--parse-selector-str (selector-str)
   "
 1. Tag Selector: div
 2. Class Selector: .class
 3. Id Selector: #id
-4. Offspring Selector: div p"
+4. Offspring Selector: div p
+5. attribute selector: div[type=email]"
   (setq selector-str (string-trim selector-str))
   (if (string-match " " selector-str)
       (mapcar #'auto-browser-dom--parse-selector-str (split-string selector-str " "))
     (cond ((string-prefix-p "." selector-str)
-           (cons 'class (substring selector-str 1)))
+           (append '(:class)
+                   (auto-browser-dom--parse-selector-attribute
+                    (substring selector-str 1))))
           ((string-prefix-p "#" selector-str)
-           (cons 'id (substring selector-str 1)))
-          (t (cons 'tag selector-str)))))
+           (append '(:id) (auto-browser-dom--parse-selector-attribute
+                           (substring selector-str 1))))
+          (t (append '(:tag) (auto-browser-dom--parse-selector-attribute
+                              selector-str))))))
+
+(defun auto-browser-dom--parse-selector-attribute (selector-str)
+  (if (string-match "=" selector-str)
+      (when (string-match "\\(.*\\)\\[\\(.*\\)=\\(.*\\)\\]" selector-str)
+        (list
+         (match-string 1 selector-str)
+         :attr-key
+         (match-string 2 selector-str)
+         :attr-value
+         (match-string 3 selector-str)))
+    (list selector-str)))
 
 (defun auto-browser-dom-search (dom selector)
   (dom-search
    dom
    (lambda (node)
-     (if (equal (car selector) 'tag)
-         (string= (dom-tag node)
-                  (cdr selector))
-       (string= (dom-attr node (car selector))
-                (cdr selector))))))
+     (let (match)
+       (setq match
+             (or
+              (when (plist-get selector :tag)
+                (string= (plist-get selector :tag) (dom-tag node)))
+              (when (plist-get selector :class)
+                (string= (plist-get selector :class) (dom-attr node 'class)))
+              (when (plist-get selector :id)
+                (string= (plist-get selector :id) (dom-attr node 'id)))))
+       (when (and match (plist-get selector :attr-key))
+         (setq match
+               (string= (plist-get selector :attr-value)
+                        (dom-attr node (intern (plist-get selector :attr-key))))))
+       match))))
+
 
 (defun auto-browser-dom--query-selector-all (doms selectors)
   (if selectors
       (auto-browser-dom--query-selector-all
-       (mapcan (lambda (dom) (auto-browser-dom-search dom (car selectors))) doms)
+       (mapcan (lambda (dom)
+                 (auto-browser-dom-search dom (car selectors)))
+               doms)
        (cdr selectors))
     doms))
 
@@ -66,4 +95,3 @@
 
 (provide 'auto-browser-dom)
 ;;; auto-browser-dom.el ends here
-
