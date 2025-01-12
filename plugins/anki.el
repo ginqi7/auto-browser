@@ -42,6 +42,12 @@
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,url)
        (auto-browser-anki-play-audio)
+       ;; Display HTML twice
+       ;; first time without image
+       (auto-browser-locate-element ,selector)
+       (auto-browser-get-element "html")
+       (auto-browser-anki-show)
+       ;; second time show the image
        (auto-browser-rewrite-image-to-base64)
        (auto-browser-locate-element ,selector)
        (auto-browser-get-element "html")
@@ -52,7 +58,9 @@
   "Show anki HTML."
   (let ((shr-external-rendering-functions auto-browser-anki-rendering-functions))
     (auto-browser-render-html html auto-browser-anki--buffer-name)
-    (anki-mode)))
+    (anki-mode)
+    (auto-browser--run-linearly trace-id)))
+
 
 (defun auto-browser-anki-play-audio (&optional trace-id)
   "Play Audio."

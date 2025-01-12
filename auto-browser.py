@@ -12,9 +12,6 @@ from readability import Document
 from urllib.parse import urlparse
 from collections import OrderedDict
 
-tabs = OrderedDict()
-elements = OrderedDict()
-
 def get_host(url):
     parsed_url = urlparse(url)
     return parsed_url.netloc
@@ -75,12 +72,9 @@ def rewrite_image_to_base64(tab_id):
         full_path = os.path.join(utils_directory, "rewrite-image-to-base64.js")
         el.run_js(full_path)
 
-def clear(trace_id):
-    global tabs, elements
-    del(tabs[trace_id])
-    del(elements[trace_id])
 
 def delete_oldest():
+    global tabs, elements
     if len(tabs) > 50:
         tabs.popitem(last=False)
     if len(elements) > 50:
@@ -237,8 +231,8 @@ async def init():
     global browser, tabs, elements, utils_directory
     utils_directory = await get_emacs_var("auto-browser-utils-directory")
     browser = Chromium(9222)
-    tabs = {}
-    elements = {}
+    tabs = OrderedDict()
+    elements = OrderedDict()
     print('Init')
 
 asyncio.run(main())
