@@ -33,7 +33,8 @@
 2. Class Selector: .class
 3. Id Selector: #id
 4. Offspring Selector: div p
-5. attribute selector: div[type=email]"
+5. attribute selector: div[type=email]
+6. regexp match: .group-.*"
   (setq selector-str (string-trim selector-str))
   (if (string-match " " selector-str)
       (mapcar #'auto-browser-dom--parse-selector-str (split-string selector-str " "))
@@ -58,6 +59,19 @@
          (match-string 3 selector-str)))
     (list selector-str)))
 
+
+(defun auto-browser-dom-string-full-match-p (regexp str)
+  (when str
+    (if (symbolp str)
+        (setq str (symbol-name str)))
+    ;; If there are multiple classes, just need to match one.
+    (cl-some
+     (lambda (match)
+       (eq match 0))
+     (mapcar
+      (lambda (one) (string-match-p (format "^%s$" regexp) one))
+      (string-split str " +")))))
+
 (defun auto-browser-dom-search (dom selector)
   (dom-search
    dom
@@ -66,15 +80,20 @@
        (setq match
              (or
               (when (plist-get selector :tag)
-                (string= (plist-get selector :tag) (dom-tag node)))
+                (auto-browser-dom-string-full-match-p (plist-get selector :tag)
+                                                      (dom-tag node)))
               (when (plist-get selector :class)
-                (string= (plist-get selector :class) (dom-attr node 'class)))
+                (auto-browser-dom-string-full-match-p (plist-get selector :class)
+                                                      (dom-attr node 'class)))
               (when (plist-get selector :id)
-                (string= (plist-get selector :id) (dom-attr node 'id)))))
+                (auto-browser-dom-string-full-match-p (plist-get selector :id)
+                                                      (dom-attr node 'id)))))
        (when (and match (plist-get selector :attr-key))
          (setq match
-               (string= (plist-get selector :attr-value)
-                        (dom-attr node (intern (plist-get selector :attr-key))))))
+               (auto-browser-dom-string-full-match-p
+                (plist-get selector :attr-value)
+                (dom-attr node (intern (plist-get selector :attr-key))))))
+
        match))))
 
 
@@ -92,6 +111,15 @@
     (if (symbolp (car one-or-more-selectors))
         (auto-browser-dom-search dom one-or-more-selectors)
       (auto-browser-dom--query-selector-all (list dom) one-or-more-selectors))))
+
+(defun auto-browser-dom-query-selector-first (dom selector-str)
+  (car (auto-browser-dom-query-selector-all dom selector-str)))
+
+(defun auto-browser-dom-parse-html (html)
+  (with-temp-buffer
+    (insert html)
+    (libxml-parse-html-region (point-min) (point-max))))
+
 
 (provide 'auto-browser-dom)
 ;;; auto-browser-dom.el ends here

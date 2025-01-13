@@ -43,5 +43,6 @@
                  '(:tag "div" :attr-key "name" :attr-value "123")))
   (should (equal (auto-browser-dom--parse-selector-str "div a[href=123]")
                  '((:tag "div") (:tag "a" :attr-key "href" :attr-value "123")))))
+
 (provide 'auto-browser-dom-test)
 ;;; auto-browser-dom-test.el ends here

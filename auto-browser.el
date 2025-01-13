@@ -90,13 +90,14 @@
   (other-window 1)
   (websocket-bridge-app-open-buffer "auto-browser"))
 
-(defun auto-browser-get-tab (trace-id url)
+(defun auto-browser-get-tab (trace-id url &optional match_host)
   "Call grammarly function on current buffer by FUNC-NAME."
   (interactive)
   (websocket-bridge-call "auto-browser"
                          "get-tab"
                          trace-id
-                         url))
+                         url
+                         match_host))
 
 (defun auto-browser-locate-element (trace-id locator)
   "Call grammarly function on current buffer by FUNC-NAME."
@@ -136,6 +137,14 @@
                          "run-util-js"
                          trace-id
                          util-name))
+
+(defun auto-browser-click (trace-id)
+  "Call grammarly function on current buffer by FUNC-NAME."
+  (interactive)
+  (websocket-bridge-call "auto-browser"
+                         "click"
+                         trace-id))
+
 
 (defun auto-browser-run-linearly (lst &optional trace-id)
   (setq auto-browser--call-chain (append lst auto-browser--call-chain))

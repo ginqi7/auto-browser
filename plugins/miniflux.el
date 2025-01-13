@@ -31,8 +31,6 @@
   "The miniflux base URL."
   :type 'string)
 
-(defvar auto-browser-miniflux-articles-hash-table (make-hash-table :test 'equal))
-
 (defcustom auto-browser-miniflux-rendering-functions nil
   "The miniflux rendering functions like `shr-external-rendering-functions`"
    :type 'cons)
@@ -93,30 +91,28 @@
 
 (defun auto-browser-miniflux-html-parse (html)
   "Pares unread list HTML."
-  (with-temp-buffer
-    (insert html)
-    (let* ((dom (libxml-parse-html-region (point-min) (point-max)))
-           (title-doms (auto-browser-dom-query-selector-all dom "article header h2 a"))
-           (titles (mapcar #'string-trim (mapcar #'dom-text title-doms)))
-           (urls (mapcar (lambda (node) (dom-attr node 'href)) title-doms))
-           (authors (mapcar
-                     #'string-trim
-                     (mapcar #'dom-text
-                             (auto-browser-dom-query-selector-all dom ".item-meta-info-title a"))))
-           (date (mapcar (lambda (node) (dom-attr node 'datetime))
-                         (auto-browser-dom-query-selector-all dom ".item-meta-info-timestamp time")))
-           (data))
-      (cl-loop for title in titles
-               for author in authors
-               for time in date
-               for url in urls
-               do
-               (setq data (append data
-                                  (list (list :title title
-                                              :author author
-                                              :time time
-                                              :url url)))))
-      data)))
+  (let* ((dom (auto-browser-dom-parse-html html))
+         (title-doms (auto-browser-dom-query-selector-all dom "article header h2 a"))
+         (titles (mapcar #'string-trim (mapcar #'dom-text title-doms)))
+         (urls (mapcar (lambda (node) (dom-attr node 'href)) title-doms))
+         (authors (mapcar
+                   #'string-trim
+                   (mapcar #'dom-text
+                           (auto-browser-dom-query-selector-all dom ".item-meta-info-title a"))))
+         (date (mapcar (lambda (node) (dom-attr node 'datetime))
+                       (auto-browser-dom-query-selector-all dom ".item-meta-info-timestamp time")))
+         (data))
+    (cl-loop for title in titles
+             for author in authors
+             for time in date
+             for url in urls
+             do
+             (setq data (append data
+                                (list (list :title title
+                                            :author author
+                                            :time time
+                                            :url url)))))
+    data))
 
 (provide 'miniflux)
 

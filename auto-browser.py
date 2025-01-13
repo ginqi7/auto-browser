@@ -16,8 +16,7 @@ def get_host(url):
     parsed_url = urlparse(url)
     return parsed_url.netloc
 
-
-def get_tab(trace_id, url):
+def get_tab(trace_id, url, match_host):
     global tabs
     if trace_id in tabs:
         return
@@ -25,13 +24,14 @@ def get_tab(trace_id, url):
     for tab in all_tabs:
         print(tab)
         if tab.url == url or \
-           get_host(tab.url) == get_host(url) :
+           get_host(tab.url) == get_host(url):
             tabs[trace_id] = tab
             break
 
     if  trace_id not in tabs:
         tabs[trace_id] = browser.new_tab(url)
-    elif tabs[trace_id].url != url :
+    elif not match_host and \
+         tabs[trace_id].url != url:
         tabs[trace_id].get(url)
 
 def locate_element(trace_id, locator):
@@ -152,6 +152,11 @@ def wait_response(trace_id, url_pattern):
     print(data)
     return [data]
 
+def click(trace_id):
+    global tabs, elements
+    print(elements[trace_id])
+    elements[trace_id].click()
+
 
 # dispatch message received from Emacs.
 async def on_message(message):
@@ -164,7 +169,10 @@ async def on_message(message):
         delete_oldest()
         if cmd == 'get-tab':
             url = info[1][2]
-            get_tab(trace_id, url)
+            match_host = False
+            if len(info[1]) >= 4:
+                match_host = info[1][3]
+            get_tab(trace_id, url, match_host)
         elif cmd == 'locate-element':
             locator = info[1][2]
             locate_element(trace_id, locator)
@@ -192,6 +200,8 @@ async def on_message(message):
             url_pattern = info[1][2]
             callback = info[1][3]
             result = stream_response(trace_id, url_pattern, callback)
+        elif cmd == 'click':
+            result = click(trace_id)
         else:
             print(f'not fount handler for {cmd}', flush=True)
         args = [trace_id]
