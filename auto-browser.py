@@ -157,6 +157,18 @@ def click(trace_id):
     print(elements[trace_id])
     elements[trace_id].click()
 
+def scroll(trace_id, delta_y, delta_x):
+    global tabs, elements
+    tabs[trace_id].actions.scroll(delta_y=delta_y, delta_x=delta_x)
+
+def key_down(trace_id, key):
+    global tabs, elements
+    tabs[trace_id].actions.key_down(key)
+
+def key_up(trace_id, key):
+    global tabs, elements
+    tabs[trace_id].actions.key_up(key)
+
 
 # dispatch message received from Emacs.
 async def on_message(message):
@@ -202,6 +214,16 @@ async def on_message(message):
             result = stream_response(trace_id, url_pattern, callback)
         elif cmd == 'click':
             result = click(trace_id)
+        elif cmd == 'scroll':
+            delta_y = info[1][2]
+            delta_x = info[1][3]
+            result = scroll(trace_id, delta_y, delta_x)
+        elif cmd == 'key-down':
+            key = info[1][2]
+            result = key_down(trace_id, key)
+        elif cmd == 'key-up':
+            key = info[1][2]
+            result = key_up(trace_id, key)
         else:
             print(f'not fount handler for {cmd}', flush=True)
         args = [trace_id]

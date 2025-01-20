@@ -29,7 +29,7 @@
 (defvar auto-browser-py-path
   (concat (file-name-directory (or load-file-name
                                    (buffer-file-name)))
-         "auto-browser.py"))
+          "auto-browser.py"))
 
 (defvar auto-browser-utils-directory
   (concat (file-name-directory (or load-file-name (buffer-file-name)))
@@ -91,7 +91,7 @@
   (websocket-bridge-app-open-buffer "auto-browser"))
 
 (defun auto-browser-get-tab (trace-id url &optional match_host)
-  "Call grammarly function on current buffer by FUNC-NAME."
+  "Call Auto Browser function."
   (interactive)
   (websocket-bridge-call "auto-browser"
                          "get-tab"
@@ -100,7 +100,7 @@
                          match_host))
 
 (defun auto-browser-locate-element (trace-id locator)
-  "Call grammarly function on current buffer by FUNC-NAME."
+  "Call Auto Browser function."
   (interactive)
   (websocket-bridge-call "auto-browser"
                          "locate-element"
@@ -108,7 +108,7 @@
                          locator))
 
 (defun auto-browser-run-js (trace-id js)
-  "Call grammarly function on current buffer by FUNC-NAME."
+  "Call Auto Browser function."
   (interactive)
   (websocket-bridge-call "auto-browser"
                          "run-js"
@@ -116,7 +116,7 @@
                          js))
 
 (defun auto-browser-get-element (trace-id property)
-  "Call grammarly function on current buffer by FUNC-NAME."
+  "Call Auto Browser function."
   (interactive)
   (websocket-bridge-call "auto-browser"
                          "get-element"
@@ -124,14 +124,14 @@
                          property))
 
 (defun auto-browser-get-cookies (trace-id)
-  "Call grammarly function on current buffer by FUNC-NAME."
+  "Call Auto Browser function."
   (interactive)
   (websocket-bridge-call "auto-browser"
                          "get-cookies"
                          trace-id))
 
 (defun auto-browser-run-util-js (trace-id util-name)
-  "Call grammarly function on current buffer by FUNC-NAME."
+  "Call Auto Browser function."
   (interactive)
   (websocket-bridge-call "auto-browser"
                          "run-util-js"
@@ -139,11 +139,36 @@
                          util-name))
 
 (defun auto-browser-click (trace-id)
-  "Call grammarly function on current buffer by FUNC-NAME."
+  "Call Auto Browser function."
   (interactive)
   (websocket-bridge-call "auto-browser"
                          "click"
                          trace-id))
+
+(defun auto-browser-scroll (trace-id delta-y delta-x)
+  "Call Auto Browser function."
+  (interactive)
+  (websocket-bridge-call "auto-browser"
+                         "scroll"
+                         trace-id
+                         delta-y
+                         delta-x))
+
+(defun auto-browser-key-down (trace-id key)
+  "Call Auto Browser function."
+  (interactive)
+  (websocket-bridge-call "auto-browser"
+                         "key-down"
+                         trace-id
+                         key))
+
+(defun auto-browser-key-up (trace-id key)
+  "Call Auto Browser function."
+  (interactive)
+  (websocket-bridge-call "auto-browser"
+                         "key-up"
+                         trace-id
+                         key))
 
 
 (defun auto-browser-run-linearly (lst &optional trace-id)

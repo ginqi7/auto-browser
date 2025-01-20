@@ -30,17 +30,35 @@
 
 (defvar auto-browser-anki--buffer-name "*anki*")
 
+(defvar auto-browser-anki--question-page-p t
+  "question or anwser.")
+
 (defcustom auto-browser-anki-rendering-functions nil
   "The anki rendering functions like `shr-external-rendering-functions`"
-   :type 'cons)
+  :type 'cons)
+
+(defun auto-browser-anki--set-page-type (trace-id html)
+  (let ((button-text
+         (dom-text
+          (auto-browser-dom-query-selector-first
+           (auto-browser-dom-parse-html html) "button"))))
+    (if (string= button-text "Again")
+        (setq auto-browser-anki--question-page-p nil)
+      (setq auto-browser-anki--question-page-p t))
+    (auto-browser--run-linearly trace-id)))
+
 
 (defun auto-browser-anki-study (&optional trace-id)
   "Show anki study page."
   (interactive)
   (let* ((url auto-browser-anki--study-url)
-         (selector "#qa"))
+         (selector "#qa")
+         (ansarea "#ansarea"))
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,url)
+       (auto-browser-locate-element ,ansarea)
+       (auto-browser-get-element "html")
+       (auto-browser-anki--set-page-type)
        (auto-browser-anki-play-audio)
        ;; Display HTML twice
        ;; first time without image
@@ -78,11 +96,12 @@
   (interactive)
   (let* ((selector "tag:button@text():Show Answer")
          (url auto-browser-anki--study-url))
-    (auto-browser-run-linearly
-     `((auto-browser-get-tab ,url)
-       (auto-browser-locate-element ,selector)
-       (auto-browser-run-js "this.click()")
-       (auto-browser-anki-study)))))
+    (when auto-browser-anki--question-page-p
+      (auto-browser-run-linearly
+       `((auto-browser-get-tab ,url)
+         (auto-browser-locate-element ,selector)
+         (auto-browser-run-js "this.click()")
+         (auto-browser-anki-study))))))
 
 (defun auto-browser-anki-easy ()
   "Mark the item status Easy."
@@ -98,8 +117,8 @@
   "Mark the item status Hard."
   (interactive)
   (auto-browser-anki--mark "Hard"))
-
 (defun auto-browser-anki-again ()
+
   "Mark the item status Again."
   (interactive)
   (auto-browser-anki--mark "Again"))
@@ -109,17 +128,18 @@
   (interactive)
   (auto-browser-anki--mark
    (completing-read "Mark Status: "
-          '("Again" "Hard" "Good" "Easy"))))
+                    '("Again" "Hard" "Good" "Easy"))))
 
 (defun auto-browser-anki--mark (status)
   "Mark the item status."
   (let* ((selector (concat "tag:button@text():" status))
          (url auto-browser-anki--study-url))
-    (auto-browser-run-linearly
-     `((auto-browser-get-tab ,url)
-       (auto-browser-locate-element ,selector)
-       (auto-browser-run-js "this.click()")
-       (auto-browser-anki-study)))))
+    (unless auto-browser-anki--question-page-p
+      (auto-browser-run-linearly
+       `((auto-browser-get-tab ,url)
+         (auto-browser-locate-element ,selector)
+         (auto-browser-run-js "this.click()")
+         (auto-browser-anki-study))))))
 
 (define-minor-mode anki-mode "An anki mode"
   :keymap
@@ -130,7 +150,16 @@
     (define-key map (kbd "e") 'auto-browser-anki-easy)
     (define-key map (kbd "h") 'auto-browser-anki-hard)
     (define-key map (kbd "a") 'auto-browser-anki-again)
-   map))
+    (define-key map (kbd "j") 'auto-browser-anki-dwim)
+    (define-key map (kbd "k") 'auto-browser-anki-hard)
+    map))
+
+(defun auto-browser-anki-dwim ()
+  (interactive)
+  (if auto-browser-anki--question-page-p
+      (auto-browser-anki-show-answer)
+    (auto-browser-anki-good)))
+
 
 (provide 'anki)
 ;;; anki.el ends here
