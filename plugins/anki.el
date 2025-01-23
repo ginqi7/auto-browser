@@ -33,6 +33,9 @@
 (defvar auto-browser-anki--question-page-p t
   "question or anwser.")
 
+(defvar auto-browser-anki--counts nil
+  "the number of study cards.")
+
 (defcustom auto-browser-anki-rendering-functions nil
   "The anki rendering functions like `shr-external-rendering-functions`"
   :type 'cons)
@@ -47,18 +50,38 @@
       (setq auto-browser-anki--question-page-p t))
     (auto-browser--run-linearly trace-id)))
 
+(defun auto-browser-anki--set-count (trace-id html)
+  (let ((counts
+         (auto-browser-dom-query-selector-all
+          (auto-browser-dom-parse-html html) "span")))
+    (setq auto-browser-anki--counts nil)
+    (setq auto-browser-anki--counts
+          (plist-put auto-browser-anki--counts
+                     :new (dom-text (nth 0 counts))))
+    (setq auto-browser-anki--counts
+          (plist-put auto-browser-anki--counts
+                     :learn (dom-text (nth 1 counts))))
+    (setq auto-browser-anki--counts
+          (plist-put auto-browser-anki--counts
+                     :review (dom-text (nth 2 counts))))
+    
+    (auto-browser--run-linearly trace-id)))
 
 (defun auto-browser-anki-study (&optional trace-id)
   "Show anki study page."
   (interactive)
   (let* ((url auto-browser-anki--study-url)
          (selector "#qa")
-         (ansarea "#ansarea"))
+         (ansarea "#ansarea")
+         (count-selector ".float-end"))
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,url)
        (auto-browser-locate-element ,ansarea)
        (auto-browser-get-element "html")
        (auto-browser-anki--set-page-type)
+       (auto-browser-locate-element ,count-selector)
+       (auto-browser-get-element "html")
+       (auto-browser-anki--set-count)
        (auto-browser-anki-play-audio)
        ;; Display HTML twice
        ;; first time without image
@@ -72,10 +95,23 @@
        (auto-browser-anki-show))
      trace-id)))
 
+(defun auto-browser-add-count-info (html)
+  (format "<h1>
+             <span style=\"color: #00f;\">%s</span>
+             <span style=\"color: #900;\">%s</span>
+             <span style=\"color: #090;\">%s</span>
+           </h1>%s"
+          (plist-get auto-browser-anki--counts :new)
+          (plist-get auto-browser-anki--counts :learn)
+          (plist-get auto-browser-anki--counts :review)
+          html))
+
 (defun auto-browser-anki-show (trace-id html)
   "Show anki HTML."
   (let ((shr-external-rendering-functions auto-browser-anki-rendering-functions))
-    (auto-browser-render-html html auto-browser-anki--buffer-name)
+
+    (auto-browser-render-html (auto-browser-add-count-info html)
+                              auto-browser-anki--buffer-name)
     (anki-mode)
     (auto-browser--run-linearly trace-id)))
 
