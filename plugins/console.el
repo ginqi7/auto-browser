@@ -73,7 +73,11 @@
                      (org-element-property :end results)))
     (save-excursion
       (goto-char (org-element-property :end element))
-      (insert (format "#+RESULTS:\n: %s\n\n" result)))))
+      (insert (format "#+RESULTS:\n%s\n\n"
+                      (string-join
+                       (mapcar (lambda (line) (format ": %s" line))
+                               (string-split result "\n"))
+                       "\n"))))))
 
 (defun auto-browser-console-org-send ()
   "Send org block script to browser console."
