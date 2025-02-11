@@ -99,13 +99,23 @@
                          url
                          match_host))
 
-(defun auto-browser-locate-element (trace-id locator)
+(defun auto-browser-locate-element (trace-id locator &optional in-element-p)
   "Call Auto Browser function."
   (interactive)
   (websocket-bridge-call "auto-browser"
                          "locate-element"
                          trace-id
-                         locator))
+                         locator
+                         in-element-p))
+
+(defun auto-browser-locate-element-chain (trace-id selectors &optional in-element-p)
+  (auto-browser-run-linearly
+   `,(append (list
+              (list 'auto-browser-locate-element (car selectors) in-element-p))
+             (mapcar (lambda (selector)
+                       (list 'auto-browser-locate-element selector t))
+                     (cdr selectors)))
+   trace-id))
 
 (defun auto-browser-run-js (trace-id js)
   "Call Auto Browser function."
@@ -182,6 +192,10 @@
     (let ((func (car (car auto-browser--call-chain)))
           (parameters (cdr (car auto-browser--call-chain))))
       (setq auto-browser--call-chain (cdr auto-browser--call-chain))
+      ;; (print (append
+      ;;         (list func traceId)
+      ;;         parameters
+      ;;         args))
       (eval (append
              (list func traceId)
              parameters
@@ -198,11 +212,12 @@
                          trace-id
                          html))
 
-(defun auto-browser-input (trace-id input-str)
+(defun auto-browser-input (trace-id input-str &optional clear)
   (websocket-bridge-call "auto-browser"
                          "input"
                          trace-id
-                         input-str))
+                         input-str
+                         clear))
 
 (defun auto-browser-wait-response (trace-id url-pattern)
   (websocket-bridge-call "auto-browser"
@@ -216,6 +231,12 @@
                          trace-id
                          url-pattern
                          callback))
+
+(defun auto-browser-console (trace-id script)
+  (websocket-bridge-call "auto-browser"
+                         "console"
+                         trace-id
+                         script))
 
 
 (defun auto-browser-render-html (html buffer)

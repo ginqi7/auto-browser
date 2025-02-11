@@ -1,6 +1,7 @@
 import asyncio
 import json
 from time import sleep
+
 import sexpdata
 import os
 import re
@@ -8,6 +9,7 @@ import re
 import websocket_bridge_python
 
 from DrissionPage import Chromium
+from DrissionPage.common import Keys
 from readability import Document
 from urllib.parse import urlparse
 from collections import OrderedDict
@@ -34,9 +36,12 @@ def get_tab(trace_id, url, match_host):
          tabs[trace_id].url != url:
         tabs[trace_id].get(url)
 
-def locate_element(trace_id, locator):
+def locate_element(trace_id, locator, in_element):
     global tabs, elements
-    elements[trace_id] = tabs[trace_id].ele(locator)
+    if in_element:
+        elements[trace_id] = elements[trace_id].ele(locator)
+    else:
+        elements[trace_id] = tabs[trace_id].ele(locator)
 
 async def get_element(trace_id, property):
     global tabs, elements
@@ -51,6 +56,7 @@ def handle_arg_types(arg):
 async def eval_in_emacs(method_name, args):
     args = [sexpdata.Symbol(method_name)] + list(map(handle_arg_types, args))    # type: ignore
     sexp = sexpdata.dumps(args)
+    # print(sexp)
     await bridge.eval_in_emacs(sexp)
 
 def run_js(trace_id, js):
@@ -84,9 +90,9 @@ def readability_html(html):
     doc = Document(html)
     return [doc.summary()]
 
-def input(trace_id, str):
+def input(trace_id, str, clear):
     global tabs, elements
-    elements[trace_id].input(str)
+    elements[trace_id].input(str, clear=clear)
 
 def stream_response_finished(trace_id, kwargs):
     global request_status
@@ -169,6 +175,15 @@ def key_up(trace_id, key):
     global tabs, elements
     tabs[trace_id].actions.key_up(key)
 
+def console(trace_id, script):
+    global tabs, elements
+    tab = tabs[trace_id]
+    tab.console.start()
+    tab.run_js(script+';console.log("Finished");',timeout=10)
+    data = tab.console.wait()
+    tab.console.stop()
+    text = data.text
+    return [text]
 
 # dispatch message received from Emacs.
 async def on_message(message):
@@ -187,7 +202,10 @@ async def on_message(message):
             get_tab(trace_id, url, match_host)
         elif cmd == 'locate-element':
             locator = info[1][2]
-            locate_element(trace_id, locator)
+            in_element = False
+            if (len (info[1]) > 3) :
+                in_element = info[1][3]
+            locate_element(trace_id, locator, in_element)
         elif cmd == 'run-js':
             js = info[1][2]
             run_js(trace_id, js)
@@ -204,7 +222,10 @@ async def on_message(message):
             result = readability_html(html)
         elif cmd == 'input':
             input_str = info[1][2]
-            input(trace_id, input_str)
+            clear = False
+            if (len (info[1]) > 3) :
+                clear = info[1][3]
+            input(trace_id, input_str, clear)
         elif cmd == 'wait-response':
             url_pattern = info[1][2]
             result = wait_response(trace_id, url_pattern)
@@ -224,11 +245,15 @@ async def on_message(message):
         elif cmd == 'key-up':
             key = info[1][2]
             result = key_up(trace_id, key)
+        elif cmd == 'console':
+            script = info[1][2]
+            result = console(trace_id, script)
         else:
             print(f'not fount handler for {cmd}', flush=True)
         args = [trace_id]
         if result :
             args = args + result
+            # print(args)
         await eval_in_emacs("auto-browser--run-linearly", args)
     except Exception as _:
         import traceback
