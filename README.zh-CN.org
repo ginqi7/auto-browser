@@ -1,0 +1,100 @@
+#+title: Auto Browser
+#+author: Qiqi Jin
+
+* 简介
+有许常用的在线服务，我希望能通过 Emacs 访问它们。因此开发了这个项目，Auto Browser 是 Emacs 和浏览器之间的桥梁，允许控制浏览器并快速访问网页。
+
+目前它只支持基于 Chromium 的浏览器，因为它依赖于 [[https://drissionpage.cn/get_start/installation][drissionpage]]。
+
+Auto Browser 提供了一些简单的 API 来控制浏览器以及访问网页和页面上的元素。您可以在这里查看 API 参考。
+
+* 前提
+
+1. 基于 Chromium-based browsers 的浏览器
+2. *Python* : 3.6 以及以上
+
+** 依赖的包
++ *[[https://github.com/ginqi7/websocket-bridge][websocket-bridge]]* ：连接 Emacs 和 Python 程序的桥梁。
++ *shr* ：用于渲染 HTML 文本
++ *org* ：有些插件会使用 org-mode
+
+* 安装
+** 依赖的包
+- 通过 git 下载依赖的 Emacs 包：
+  #+BEGIN_SRC sh
+    git clone git@github.com:ginqi7/auto-browser.git ~/.emacs.d/lisp/auto-browser
+    git clone git@github.com:ginqi7/websocket-bridge.git ~/.emacs.d/lisp/websocket-bridge
+    git clone git@github.com:ahyatt/emacs-websocket.git ~/.emacs.d/lisp/emacs-websocket
+  #+END_SRC
+其中 [[https://elpa.gnu.org/packages/websocket.html][emacs-websocket]] 可以在 ELPA 下载。
+
+- 把相关路径添加到 load-path
+  #+BEGIN_SRC emacs-lisp
+    (add-to-list 'load-path (expand-file-name "~/.emacs.d/lisp/auto-browser"))
+    (add-to-list 'load-path (expand-file-name "~/.emacs.d/lisp/auto-browser/plugins"))
+    (add-to-list 'load-path (expand-file-name "~/.emacs.d/lisp/websocket-bridge"))
+    (add-to-list 'load-path (expand-file-name "~/.emacs.d/lisp/emacs-websocket"))
+  #+END_SRC
+
+** 安装 Python 依赖
+推荐创建一个专属 auto-browser 的 Python 环境，这样不会和日常的 Python 环境相互干扰，例如：
+1. python3 -m venv auto-browser
+2. /SOME_PATH/auto-browser/bin/pip3 install sexpdata websocket_bridge_python DrissionPage readability-lxml lxml_html_clean
+
+** 启动 Chrome
+需要在启动 Chrome 时附带，remote-debugging-port=9222
+
+MacOS 下的示例：
+#+begin_src shell
+  "/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome" --remote-debugging-port=9222
+#+end_src
+
+
+* 配置
+#+begin_src emacs-lisp
+  (require 'auto-browser)
+  ;; 不同的插件，引入不同的包
+  (require 'web-ai)
+  (require 'anki)
+  (require 'miniflux)
+  (require 'telegram)
+  (require 'twitter)
+  (require 'console)
+
+  (setq auto-browser-python "~/auto-browser/bin/python3") ;; 指定你使用的 python 命令的路径
+  (setq auto-browser-miniflux-base-url "http://127.0.0.1") ;; 你使用的 miniflux 的地址
+
+  ;; 可以通过 transient 定义快捷访问按键
+  (transient-define-prefix prefix-auto-browser ()
+    "Prefix for auto browser."
+    ["Command"
+     ("a" "Anki" auto-browser-anki-study)
+     ("w" "Web AI" auto-browser-web-ai-input)
+     ("m" "Miniflux" auto-browser-miniflux-open-unread)
+     ("t" "Telegram" auto-browser-telegram-list-dialogues)
+     ("x" "Twitter" auto-browser-twitter-following)
+     ("c" "console" auto-browser-console-org-send)])
+
+  ;; 绑定一个快捷键
+  (keymap-global-set "C-c a" #'prefix-auto-browser)
+  ;; 启动 auto-browser
+  (auto-browser-restart)
+#+end_src
+
+** 各个插件的详细说明
+- [[file:doc/anki.zh-CN.org][Anki 详细说明]]
+- [[file:doc/twitter.zh-CN.org][Twitter 详细说明]]
+- [[file:doc/miniflux.zh-CN.org][Miniflux 详细说明]]
+- [[file:doc/telegram.zh-CN.org][Telegram 详细说明]]
+- [[file:doc/console.zh-CN.org][Console 详细说明]]
+
+* 问题定位
+当使用存在问题时，可以调用 =websocket-bridge-app-log-buffer= 查看 auto-browser 的问题日志。
+
+* Examples
+** Anki
+[[file:examples/anki.gif]]
+** Miniflux
+[[file:examples/miniflux.gif]]
+** Web AI
+[[file:examples/ai.gif]]

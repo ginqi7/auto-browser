@@ -1,0 +1,23 @@
+#+TITLE: Console
+
+* 最简单的使用示例
+1. 新建一个 org 文件
+2. 添加 URL 配置，例如： #+URL: https://emacs-china.org/
+3. 创建一个 js source block, 在其中编辑代码
+4. 运行 =auto-browser-console-org-send= 发送 script 让 Chrome 运行
+5. 结果会打印在 #+RESUTLS: 里
+
+* 示例
+#+begin_src org-mode
+ #+TITLE: Emacs China
+ #+URL: https://emacs-china.org/
+ ,#+begin_src js
+  a = document.querySelector('.main-link a').outerHTML
+  console.log(a);
+ ,#+end_src
+#+end_src
+
+* 相关命令
+| 命令                          | 描述                            | 默认快捷键 |
+|-------------------------------+---------------------------------+-----------|
+| auto-browser-console-org-send | 把当前source block 发送到 Chrome | 无        |

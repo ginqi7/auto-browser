@@ -1,0 +1,12 @@
+#+TITLE: miniflux
+
+* 最简单的使用示例
+1. =auto-browser-miniflux-open-unread= 打开 miniflux unread 页面
+2. 自由移动到想要阅读的文章上
+3. 按 =RET= 打开文章页面
+
+* 相关命令
+| 命令                               | 描述                     | 默认快捷键 |
+|------------------------------------+--------------------------+-----------|
+| auto-browser-miniflux-open-unread  | 打开 miniflux unread 页面 | 无        |
+| auto-browser-miniflux-open-article | 阅读文章                  | RET         |

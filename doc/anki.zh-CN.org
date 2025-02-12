@@ -1,0 +1,18 @@
+#+TITLE: Anki
+
+* 最简单的使用示例
+1. auto-browser-anki-study 开始学习。
+2. 按 =j= 显示答案。
+3. 如果答案认识，按 =j= 标记为良好，如果不认识，按 =k= 标记为困难。
+   
+* 相关命令
+| 命令                          | 描述                                   | 默认快捷键 |
+|-------------------------------+----------------------------------------+-----------|
+| auto-browser-anki-study       | 开始 Anki 学习                          | 无        |
+| auto-browser-anki-show-answer | 显示答案                                | s         |
+| auto-browser-anki-play-audio  | 播放音频                                | p         |
+| auto-browser-anki-good        | 标记答案为良好                           | g         |
+| auto-browser-anki-easy        | 标记答案为简单                           | e         |
+| auto-browser-anki-hard        | 标记答案为困难                           | h 或者 k  |
+| auto-browser-anki-again       | 标记答案为再来一次                       | a         |
+| auto-browser-anki-dwim        | 在问题页面显示答案，在答案页面标记答案为良好 | j         |

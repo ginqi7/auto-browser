@@ -1,0 +1,16 @@
+#+TITLE: Twitter
+
+* 最简单的使用示例
+1. =auto-browser-twitter-following= 打开 twitter following 页面
+2. 按 =j= 移动到下一条 tweet
+3. 按 =k= 移动到上一条 tweet
+4. 按 =RET= 查看 tweet 详情
+
+* 相关命令
+| 命令                                | 描述               | 默认快捷键 |
+|-------------------------------------+--------------------+-----------|
+| auto-browser-twitter-following      | 打开 following 页面 | 无        |
+| auto-browser-twitter-next-tweet     | 下一条 tweet       | j         |
+| auto-browser-twitter-previous-tweet | 上一条 tweet       | k         |
+| auto-browser-twitter-tweet-detail   | tweet 详情         | RET       |
+

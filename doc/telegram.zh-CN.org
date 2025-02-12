@@ -1,0 +1,14 @@
+#+TITLE: Telegram
+
+* 最简单的使用示例
+1. =auto-browser-telegram-list-dialogues= 列出所有的 Telegram 对话
+2. 自由移动到想要查看的对话上
+3. 按 =RET= 打开对话详情
+4. =auto-browser-telegram-send-message= 发送信息
+
+* 相关命令
+| 命令                                 | 描述        | 默认快捷键 |
+|--------------------------------------+-------------+-----------|
+| auto-browser-telegram-list-dialogues | 列出所有对话 | 无        |
+| auto-browser-telegram-open-dialogue  | 查看对话详情 | RET       |
+| auto-browser-telegram-send-message   | 发送信息     | 无         |

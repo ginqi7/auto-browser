@@ -2,6 +2,9 @@
 #+author: Qiqi Jin
 #+language: en
 
+#+HTML: <a href ="https://github.com/ginqi7/auto-browser/blob/master/README.zh-CN.org"><img src="https://img.shields.io/badge/README-%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-555555.svg"/></a>
+
+* Overview
 There are many exciting online services, and I hope to access them using Emacs.
 
 Auto Browser is a bridge between Emacs and the browser, allowing control of the browser and quick access to web pages.
