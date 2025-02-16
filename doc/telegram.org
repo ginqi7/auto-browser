@@ -1,0 +1,14 @@
+#+TITLE: Telegram
+
+* Simplest usage example
+1. =auto-browser-telegram-list-dialogues= List all Telegram dialogues
+2. Move freely to the dialogue you want to view
+3. Press =RET= to open dialogue details
+4. =auto-browser-telegram-send-message= Send a message
+
+- Related commands
+| Command                              | Description           | Default Shortcut |
+|--------------------------------------+-----------------------+------------------|
+| auto-browser-telegram-list-dialogues | List all dialogues    | None             |
+| auto-browser-telegram-open-dialogue  | View dialogue details | RET              |
+| auto-browser-telegram-send-message   | Send a message        | None             |

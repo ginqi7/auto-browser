@@ -1,0 +1,12 @@
+#+TITLE: miniflux
+
+* The simplest usage example
+1. =auto-browser-miniflux-open-unread= Open the miniflux unread page
+2. Freely move to the article you want to read
+3. Press =RET= to open the article page
+
+- Related commands
+| Command                            | Description                   | Default Shortcut |
+|------------------------------------+-------------------------------+------------------|
+| auto-browser-miniflux-open-unread  | Open the miniflux unread page | None             |
+| auto-browser-miniflux-open-article | Read article                  | RET              |

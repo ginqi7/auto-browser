@@ -1,0 +1,15 @@
+#+TITLE: Twitter
+
+* Simplest Usage Example
+1. =auto-browser-twitter-following= Open the Twitter following page
+2. Press =j= to move to the next tweet
+3. Press =k= to move to the previous tweet
+4. Press =RET= to view tweet details
+
+- Related Commands
+| Command                              | Description          | Default Shortcut |
+|--------------------------------------|----------------------|------------------|
+| auto-browser-twitter-following       | Open following page  | None             |
+| auto-browser-twitter-next-tweet      | Next tweet           | j                |
+| auto-browser-twitter-previous-tweet  | Previous tweet       | k                |
+| auto-browser-twitter-tweet-detail    | Tweet details        | RET              |

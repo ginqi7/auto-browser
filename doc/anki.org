@@ -1,0 +1,18 @@
+#+TITLE: Anki
+
+* The simplest usage example
+1. auto-browser-anki-study to start studying.
+2. Press =j= to show the answer.
+3. If you know the answer, press =j= to mark it as good; if not, press =k= to mark it as hard.
+
+- Related commands
+| Command                       | Description                                                      | Default Shortcut |
+|-------------------------------+------------------------------------------------------------------+------------------|
+| auto-browser-anki-study       | Start Anki study                                                 | None             |
+| auto-browser-anki-show-answer | Show the answer                                                  | s                |
+| auto-browser-anki-play-audio  | Play audio                                                       | p                |
+| auto-browser-anki-good        | Mark answer as good                                              | g                |
+| auto-browser-anki-easy        | Mark answer as easy                                              | e                |
+| auto-browser-anki-hard        | Mark answer as hard                                              | h or k           |
+| auto-browser-anki-again       | Mark answer as again                                             | a                |
+| auto-browser-anki-dwim        | Show answer on question page, mark answer as good on answer page | j                |

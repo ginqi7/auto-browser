@@ -1,0 +1,23 @@
+#+TITLE: Console
+
+* The simplest usage example
+1. Create a new org file
+2. Add a URL configuration, for example: #+URL: https://emacs-china.org/
+3. Create a js source block and edit the code within
+4. Run =auto-browser-console-org-send= to send the script to Chrome for execution
+5. The results will be printed in #+RESULTS:
+
+- Example
+#+begin_src org-mode
+ #+TITLE: Emacs China
+ #+URL: https://emacs-china.org/
+ ,#+begin_src js
+  a = document.querySelector('.main-link a').outerHTML
+  console.log(a);
+ ,#+end_src
+#+end_src
+
+- Relevant commands
+| Command                       | Description                        | Default Shortcut |
+|-------------------------------+------------------------------------+-----------------|
+| auto-browser-console-org-send | Send the current source block to Chrome | None              |

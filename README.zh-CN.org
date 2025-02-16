@@ -38,8 +38,8 @@ Auto Browser 提供了一些简单的 API 来控制浏览器以及访问网页�
 
 ** 安装 Python 依赖
 推荐创建一个专属 auto-browser 的 Python 环境，这样不会和日常的 Python 环境相互干扰，例如：
-1. python3 -m venv auto-browser
-2. /SOME_PATH/auto-browser/bin/pip3 install sexpdata websocket_bridge_python DrissionPage readability-lxml lxml_html_clean
+1. =python3 -m venv auto-browser=
+2. =/SOME_PATH/auto-browser/bin/pip3 install sexpdata websocket_bridge_python DrissionPage readability-lxml lxml_html_clean=
 
 ** 启动 Chrome
 需要在启动 Chrome 时附带，remote-debugging-port=9222

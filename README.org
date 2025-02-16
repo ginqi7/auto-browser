@@ -23,16 +23,29 @@ Auto Browser provides some simple APIs to control the browser and access pages a
 + *shr* : To render html.
 
 ** Install
+** Dependent Packages
+
 + clone the project in your own emacs configuration files directory, like:
   #+BEGIN_SRC sh
     git clone git@github.com:ginqi7/auto-browser.git ~/.emacs.d/lisp/auto-browser
+    git clone git@github.com:ginqi7/websocket-bridge.git ~/.emacs.d/lisp/websocket-bridge
+    git clone git@github.com:ahyatt/emacs-websocket.git ~/.emacs.d/lisp/emacs-websocket
   #+END_SRC
+
+The [[https://elpa.gnu.org/packages/websocket.html][emacs-websocket]] can be downloaded from ELPA.
 
 + add the path to 'load-path'
   #+BEGIN_SRC emacs-lisp
     (add-to-list 'load-path (expand-file-name "~/.emacs.d/lisp/d/lisp/auto-browser"))
     (add-to-list 'load-path (expand-file-name "~/.emacs.d/lisp/d/lisp/auto-browser/plugins"))
+    (add-to-list 'load-path (expand-file-name "~/.emacs.d/lisp/websocket-bridge"))
+    (add-to-list 'load-path (expand-file-name "~/.emacs.d/lisp/emacs-websocket"))
   #+END_SRC
+
+** Install Python dependencies
+It is recommended to create a dedicated Python environment for auto-browser, so it does not interfere with the regular Python environment, for example:
+1. =python3 -m venv auto-browser=
+2. =/SOME_PATH/auto-browser/bin/pip3 install sexpdata websocket_bridge_python DrissionPage readability-lxml lxml_html_clean=
 
 ** Reuse existing browser instance
 Run Chrome with --remote-debugging-port=9222
@@ -44,10 +57,42 @@ Run Chrome with --remote-debugging-port=9222
 Here are a few variables that can be used for configuration:
 #+BEGIN_SRC emacs-lisp
   (require 'auto-browser)
-  (require 'anki) ;; Optional, If you use anki web.
-  (require 'miniflux) ;; Optional, If you use miniflux web.
-  (require 'web-ai) ;; Optional, If you use a simple web chat AI service.
+  ;; Different plugins, different packages introduced
+  (require 'web-ai)
+  (require 'anki)
+  (require 'miniflux)
+  (require 'telegram)
+  (require 'twitter)
+  (require 'console)
+
+  (setq auto-browser-python "~/auto-browser/bin/python3") ;; Specify the path of the python command you are using.
+  (setq auto-browser-miniflux-base-url "http://127.0.0.1") ;; The address of Miniflux you are using
+  ;; You can define shortcut access keys through transient
+  (transient-define-prefix prefix-auto-browser ()
+    "Prefix for auto browser."
+    ["Command"
+     ("a" "Anki" auto-browser-anki-study)
+     ("w" "Web AI" auto-browser-web-ai-input)
+     ("m" "Miniflux" auto-browser-miniflux-open-unread)
+     ("t" "Telegram" auto-browser-telegram-list-dialogues)
+     ("x" "Twitter" auto-browser-twitter-following)
+     ("c" "console" auto-browser-console-org-send)])
+
+  ;; Bind a shortcut key.
+  (keymap-global-set "C-c a" #'prefix-auto-browser)
+  ;; start auto-browser
+  (auto-browser-restart)
 #+end_src
+
+** Detailed Descriptions of Each Plugin
+- [[file:doc/anki.org][Anki Detailed Description]]
+- [[file:doc/twitter.org][Twitter Detailed Description]]
+- [[file:doc/miniflux.org][Miniflux Detailed Description]]
+- [[file:doc/telegram.org][Telegram Detailed Description]]
+- [[file:doc/console.org][Console Detailed Description]]
+
+* Problem Diagnosis
+When encountering issues during use, you can call =websocket-bridge-app-log-buffer= to view the problem log of auto-browser.
 
 * Examples
 ** Anki
