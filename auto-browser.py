@@ -175,6 +175,10 @@ def key_up(trace_id, key):
     global tabs, elements
     tabs[trace_id].actions.key_up(key)
 
+def refresh(trace_id):
+    global tabs, elements
+    tabs[trace_id].refresh()
+
 def console(trace_id, script):
     global tabs, elements
     tab = tabs[trace_id]
@@ -248,6 +252,9 @@ async def on_message(message):
         elif cmd == 'console':
             script = info[1][2]
             result = console(trace_id, script)
+        elif cmd == 'refresh':
+            result = refresh(trace_id)
+
         else:
             print(f'not fount handler for {cmd}', flush=True)
         args = [trace_id]

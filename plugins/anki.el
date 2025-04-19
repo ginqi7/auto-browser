@@ -64,7 +64,6 @@
     (setq auto-browser-anki--counts
           (plist-put auto-browser-anki--counts
                      :review (dom-text (nth 2 counts))))
-    
     (auto-browser--run-linearly trace-id)))
 
 (defun auto-browser-anki-study (&optional trace-id)
@@ -153,8 +152,17 @@
   "Mark the item status Hard."
   (interactive)
   (auto-browser-anki--mark "Hard"))
-(defun auto-browser-anki-again ()
 
+(defun auto-browser-anki-refresh ()
+  "Refresh."
+  (interactive)
+  (let* ((url auto-browser-anki--study-url))
+    (auto-browser-run-linearly
+     `((auto-browser-get-tab ,url)
+       (auto-browser-refresh)
+       (auto-browser-anki-study)))))
+
+(defun auto-browser-anki-again ()
   "Mark the item status Again."
   (interactive)
   (auto-browser-anki--mark "Again"))
@@ -188,6 +196,7 @@
     (define-key map (kbd "a") 'auto-browser-anki-again)
     (define-key map (kbd "j") 'auto-browser-anki-dwim)
     (define-key map (kbd "k") 'auto-browser-anki-hard)
+    (define-key map (kbd "r") 'auto-browser-anki-refresh)
     map))
 
 (defun auto-browser-anki-dwim ()

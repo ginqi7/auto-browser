@@ -238,6 +238,10 @@
                          trace-id
                          script))
 
+(defun auto-browser-refresh (trace-id)
+  (websocket-bridge-call "auto-browser"
+                         "refresh"
+                         trace-id))
 
 (defun auto-browser-render-html (html buffer)
   "Render HTML."
