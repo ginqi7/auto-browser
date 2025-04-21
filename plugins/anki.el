@@ -122,7 +122,7 @@
          (selector "tag:audio"))
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,url)
-       (auto-browser-locate-element ,selector)
+       (auto-browser-locate-element ,selector nil 0.2)
        (auto-browser-run-js "this.play()"))
      trace-id)))
 

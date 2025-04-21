@@ -99,14 +99,15 @@
                          url
                          match_host))
 
-(defun auto-browser-locate-element (trace-id locator &optional in-element-p)
+(defun auto-browser-locate-element (trace-id locator &optional in-element-p timeout)
   "Call Auto Browser function."
   (interactive)
   (websocket-bridge-call "auto-browser"
                          "locate-element"
                          trace-id
                          locator
-                         in-element-p))
+                         in-element-p
+                         timeout))
 
 (defun auto-browser-locate-element-chain (trace-id selectors &optional in-element-p)
   (auto-browser-run-linearly

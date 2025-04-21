@@ -9,6 +9,7 @@ import re
 import websocket_bridge_python
 
 from DrissionPage import Chromium
+from DrissionPage._elements.none_element import NoneElement
 from DrissionPage.common import Keys
 from readability import Document
 from urllib.parse import urlparse
@@ -36,12 +37,14 @@ def get_tab(trace_id, url, match_host):
          tabs[trace_id].url != url:
         tabs[trace_id].get(url)
 
-def locate_element(trace_id, locator, in_element):
+def locate_element(trace_id, locator, in_element, timeout):
     global tabs, elements
+    if not timeout:
+        timeout = 10
     if in_element:
-        elements[trace_id] = elements[trace_id].ele(locator)
+        elements[trace_id] = elements[trace_id].ele(locator, timeout=timeout)
     else:
-        elements[trace_id] = tabs[trace_id].ele(locator)
+        elements[trace_id] = tabs[trace_id].ele(locator, timeout=timeout)
 
 async def get_element(trace_id, property):
     global tabs, elements
@@ -61,7 +64,10 @@ async def eval_in_emacs(method_name, args):
 
 def run_js(trace_id, js):
     global elements
-    elements[trace_id].run_js(js)
+    element = elements[trace_id]
+    if not isinstance(element, NoneElement):
+        print(element)
+        element.run_js(js)
 
 def run_util_js(tab_id, util_name):
     global tabs, utils_directory
@@ -209,7 +215,10 @@ async def on_message(message):
             in_element = False
             if (len (info[1]) > 3) :
                 in_element = info[1][3]
-            locate_element(trace_id, locator, in_element)
+            if (len (info[1]) > 4) :
+                timeout = info[1][4]
+
+            locate_element(trace_id, locator, in_element, timeout)
         elif cmd == 'run-js':
             js = info[1][2]
             run_js(trace_id, js)
