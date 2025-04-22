@@ -28,7 +28,11 @@
 
 (defvar auto-browser-anki--study-url "https://ankiuser.net/study")
 
+(defvar auto-browser-anki--decks-url "https://ankiweb.net/decks")
+
 (defvar auto-browser-anki--buffer-name "*anki*")
+
+(defvar auto-browser-anki--decks-buffer-name "*anki-decks*")
 
 (defvar auto-browser-anki--question-page-p t
   "question or anwser.")
@@ -93,6 +97,66 @@
        (auto-browser-get-element "html")
        (auto-browser-anki-show))
      trace-id)))
+
+
+(defun auto-browser-anki-decks (&optional trace-id)
+  "Show anki study page."
+  (interactive)
+  (let* ((url auto-browser-anki--decks-url)
+         (selector "t:main"))
+    (auto-browser-run-linearly
+     `((auto-browser-get-tab ,url t)
+       (auto-browser-locate-element ,selector)
+       (auto-browser-get-element "html")
+       (auto-browser-anki-decks-render))
+     trace-id)))
+
+(defun auto-browser-anki-decks-render (trace-id html)
+  (with-current-buffer (get-buffer-create auto-browser-anki--decks-buffer-name)
+    (setq tabulated-list-format [("Name" 30 t)
+                                 ("Due" 10 t)
+                                 ("New"  10 t)])
+    (setq tabulated-list-padding 2)
+    (setq tabulated-list-entries (auto-browser-anki-decks--to-entries html))
+    (tabulated-list-init-header)
+    (tabulated-list-print t)
+    (tabulated-list-mode)
+    (keymap-set tabulated-list-mode-map "<RET>" #'auto-browser-anki-select)
+    (switch-to-buffer (current-buffer))))
+
+(defun auto-browser-anki-select ()
+  (interactive)
+  (let* ((url auto-browser-anki--decks-url)
+         (selector (tabulated-list-get-id)))
+    (auto-browser-run-linearly
+     `((auto-browser-get-tab ,url t)
+       (auto-browser-locate-element ,selector)
+       (auto-browser-click)
+       (auto-browser-anki-study)))))
+
+(defun auto-browser-anki-decks--to-entries (html)
+  (let (key name due new)
+    (mapcar
+     (lambda (dom)
+       (setq key
+             (string-trim
+              (string-replace " " ""
+                              (dom-text
+                               (auto-browser-dom-query-selector-first
+                                dom "button")))))
+       (setq name key)
+       (setq due
+             (dom-text
+              (auto-browser-dom-query-selector-all dom
+                                                   ".number .due")))
+       (setq new
+             (dom-text
+              (auto-browser-dom-query-selector-all dom
+                                                   ".number .new")))
+       (list key (vector name due new)))
+     (auto-browser-dom-query-selector-all
+      (auto-browser-dom-parse-html html) "div .light-bottom-border"))))
+
 
 (defun auto-browser-add-count-info (html)
   (format "<h1>
