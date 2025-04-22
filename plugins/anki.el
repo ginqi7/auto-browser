@@ -105,7 +105,7 @@
   (let* ((url auto-browser-anki--decks-url)
          (selector "t:main"))
     (auto-browser-run-linearly
-     `((auto-browser-get-tab ,url t)
+     `((auto-browser-get-tab ,url)
        (auto-browser-locate-element ,selector)
        (auto-browser-get-element "html")
        (auto-browser-anki-decks-render))
@@ -129,10 +129,11 @@
   (let* ((url auto-browser-anki--decks-url)
          (selector (tabulated-list-get-id)))
     (auto-browser-run-linearly
-     `((auto-browser-get-tab ,url t)
+     `((auto-browser-get-tab ,url)
        (auto-browser-locate-element ,selector)
        (auto-browser-click)
        (auto-browser-anki-study)))))
+
 
 (defun auto-browser-anki-decks--to-entries (html)
   (let (key name due new)
