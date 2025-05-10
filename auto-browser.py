@@ -40,7 +40,7 @@ def get_tab(trace_id, url, match_host):
 def locate_element(trace_id, locator, in_element, timeout):
     global tabs, elements
     if not timeout:
-        timeout = 10
+        timeout = 1
     if in_element:
         elements[trace_id] = elements[trace_id].ele(locator, timeout=timeout)
     else:
