@@ -260,7 +260,7 @@
     (define-key map (kbd "h") 'auto-browser-anki-hard)
     (define-key map (kbd "a") 'auto-browser-anki-again)
     (define-key map (kbd "j") 'auto-browser-anki-dwim)
-    (define-key map (kbd "k") 'auto-browser-anki-hard)
+    (define-key map (kbd "k") 'auto-browser-anki-again)
     (define-key map (kbd "r") 'auto-browser-anki-refresh)
     map))
 
