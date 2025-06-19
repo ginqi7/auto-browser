@@ -33,7 +33,7 @@
 
 (defcustom auto-browser-miniflux-rendering-functions nil
   "The miniflux rendering functions like `shr-external-rendering-functions`"
-   :type 'cons)
+  :type 'cons)
 
 (defun auto-browser-miniflux-open-unread ()
   "Open miniflux unread page."
@@ -80,7 +80,7 @@
 (define-derived-mode miniflux-unread-mode tabulated-list-mode "Contexts Menu"
   "Major mode for handling a list of miniflux unread."
   (setq tabulated-list-format [("Title" 50 t)
-                               ("Author" 20 t)
+                               ("Author" 20 t :right-align t)
                                ("Time"  10 t)])
   (setq tabulated-list-padding 2)
   (tabulated-list-init-header)
