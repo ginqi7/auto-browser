@@ -45,8 +45,33 @@
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,auto-browser-web-ai-url)
        (auto-browser-locate-element auto-browser-web-ai-input-selector)
+       (auto-browser-input ,(concat prompt "\n"))))))
+
+(defun auto-browser-web-ai-show-chat-box ()
+  (interactive)
+  (auto-browser-run-linearly
+   `((auto-browser-get-tab ,auto-browser-web-ai-url)
+     (auto-browser-locate-element "#message-wrapper")
+     (auto-browser-get-element "html")
+     (auto-browser-web-ai-render-chat-box))))
+
+(defun auto-browser-web-ai-render-chat-box (trace-id html)
+  (with-current-buffer (get-buffer-create "*web-ai-box*")
+    (erase-buffer)
+    (insert html)
+    (shr-render-region (point-min) (point-max))
+    (pop-to-buffer (current-buffer))))
+
+(defun auto-browser-web-ai-just-input ()
+  "Send Input string to Web AI."
+  (interactive)
+  (let ((prompt (read-string "Input your prompt: ")))
+    (auto-browser-run-linearly
+     `((auto-browser-get-tab ,auto-browser-web-ai-url)
+       (auto-browser-locate-element auto-browser-web-ai-input-selector)
        (auto-browser-input ,(concat prompt "\n"))
        (auto-browser-show-dialogue ,prompt)))))
+
 
 (defun decode-base64-to-unicode (base64-str)
   "Decode a Base64 encoded string to a Unicode string."
