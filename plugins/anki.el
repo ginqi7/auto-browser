@@ -184,23 +184,23 @@
   "Play Audio."
   (interactive)
   (let* ((url auto-browser-anki--study-url)
-         (selector "tag:audio"))
+         (selector "audio"))
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,url)
        (auto-browser-locate-element ,selector nil 0.2)
-       (auto-browser-run-js "this.play()"))
+       (auto-browser-run-js "el => el.play()"))
      trace-id)))
 
 (defun auto-browser-anki-show-answer ()
   "Show anki answer page."
   (interactive)
-  (let* ((selector "tag:button@text():Show Answer")
+  (let* ((selector "text=Show Answer")
          (url auto-browser-anki--study-url))
     (when auto-browser-anki--question-page-p
       (auto-browser-run-linearly
        `((auto-browser-get-tab ,url)
          (auto-browser-locate-element ,selector)
-         (auto-browser-run-js "this.click()")
+         (auto-browser-run-js "el => el.click()")
          (auto-browser-anki-study))))))
 
 (defun auto-browser-anki-easy ()
@@ -241,13 +241,13 @@
 
 (defun auto-browser-anki--mark (status)
   "Mark the item status."
-  (let* ((selector (concat "tag:button@text():" status))
+  (let* ((selector (concat "text=" status))
          (url auto-browser-anki--study-url))
     (unless auto-browser-anki--question-page-p
       (auto-browser-run-linearly
        `((auto-browser-get-tab ,url)
          (auto-browser-locate-element ,selector)
-         (auto-browser-run-js "this.click()")
+         (auto-browser-run-js "el => el.click()")
          (auto-browser-anki-study))))))
 
 (define-minor-mode anki-mode "An anki mode"

@@ -8,9 +8,8 @@ import re
 
 import websocket_bridge_python
 
-from DrissionPage import Chromium
-from DrissionPage._elements.none_element import NoneElement
-from DrissionPage.common import Keys
+import asyncio
+from playwright.async_api import async_playwright, Playwright
 from readability import Document
 from urllib.parse import urlparse
 from collections import OrderedDict
@@ -19,11 +18,15 @@ def get_host(url):
     parsed_url = urlparse(url)
     return parsed_url.netloc
 
-def get_tab(trace_id, url, match_host):
+def get_tabs():
+    default_context = browser.contexts[0]
+    return default_context.pages
+
+async def get_tab(trace_id, url, match_host):
     global tabs
     if trace_id in tabs:
         return
-    all_tabs = browser.get_tabs()
+    all_tabs = get_tabs()
     for tab in all_tabs:
         print(tab)
         if tab.url == url or \
@@ -32,23 +35,29 @@ def get_tab(trace_id, url, match_host):
             break
 
     if  trace_id not in tabs:
-        tabs[trace_id] = browser.new_tab(url)
+        tabs[trace_id] = await browser.contexts[0].new_page()
+        await tabs[trace_id].goto(url)
     elif not match_host and \
          tabs[trace_id].url != url:
-        tabs[trace_id].get(url)
+        await tabs[trace_id].goto(url)
 
-def locate_element(trace_id, locator, in_element, timeout):
+async def locate_element(trace_id, locator, in_element, timeout):
     global tabs, elements
     if not timeout:
         timeout = 1
     if in_element:
         elements[trace_id] = elements[trace_id].ele(locator, timeout=timeout)
     else:
-        elements[trace_id] = tabs[trace_id].ele(locator, timeout=timeout)
+        elements[trace_id] = await tabs[trace_id].query_selector(locator)
+        # elements[trace_id] = tabs[trace_id].ele(locator, timeout=timeout)
 
 async def get_element(trace_id, property):
     global tabs, elements
-    return [getattr(elements[trace_id], property)]
+    if property == 'html':
+        element = elements[trace_id]
+        return [await element.evaluate("el => el.outerHTML")]
+    # return [getattr(elements[trace_id], property)]
+    return ""
 
 def handle_arg_types(arg):
     if isinstance(arg, str) and arg.startswith("'"):
@@ -62,27 +71,38 @@ async def eval_in_emacs(method_name, args):
     # print(sexp)
     await bridge.eval_in_emacs(sexp)
 
-def run_js(trace_id, js):
+async def run_js(trace_id, js):
     global elements
     element = elements[trace_id]
-    if not isinstance(element, NoneElement):
-        print(element)
-        element.run_js(js)
+    if element:
+        await element.evaluate(js)
 
-def run_util_js(tab_id, util_name):
+def read_file_contents(file_path):
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            contents = file.read()
+            return contents
+    except FileNotFoundError:
+        print(f"File not found.: {file_path}")
+    except IOError:
+        print(f"Error reading the file.: {file_path}")
+
+async def run_util_js(tab_id, util_name):
     global tabs, utils_directory
     full_path = os.path.join(utils_directory, util_name)
-    tabs[tab_id].run_js(full_path)
+    content = read_file_contents(full_path)
+    await tabs[tab_id].evaluate(f"() => { {content} }")
 
-def rewrite_image_to_base64(tab_id):
+async def rewrite_image_to_base64(tab_id):
     global tabs, utils_directory
-    for el in tabs[tab_id].eles('tag:img'):
+    for el in await tabs[tab_id].query_selector_all('img'):
         for i in range(10):
-            if el.run_js("return this.complete") :
+            if await el.evaluate("el => el.complete") :
                 break
             sleep(0.2)
         full_path = os.path.join(utils_directory, "rewrite-image-to-base64.js")
-        el.run_js(full_path)
+        content = read_file_contents(full_path)
+        await el.evaluate(content)
 
 
 def delete_oldest():
@@ -173,17 +193,17 @@ def scroll(trace_id, delta_y, delta_x):
     global tabs, elements
     tabs[trace_id].actions.scroll(delta_y=delta_y, delta_x=delta_x)
 
-def key_down(trace_id, key):
+async def key_down(trace_id, key):
     global tabs, elements
-    tabs[trace_id].actions.key_down(key)
+    await tabs[trace_id].keyboard.down(key)
 
-def key_up(trace_id, key):
+async def key_up(trace_id, key):
     global tabs, elements
-    tabs[trace_id].actions.key_up(key)
+    await tabs[trace_id].keyboard.up(key)
 
 def refresh(trace_id):
     global tabs, elements
-    tabs[trace_id].refresh()
+    tabs[trace_id].reload()
 
 def console(trace_id, script):
     global tabs, elements
@@ -209,7 +229,7 @@ async def on_message(message):
             match_host = False
             if len(info[1]) >= 4:
                 match_host = info[1][3]
-            get_tab(trace_id, url, match_host)
+            await get_tab(trace_id, url, match_host)
         elif cmd == 'locate-element':
             locator = info[1][2]
             in_element = False
@@ -218,18 +238,18 @@ async def on_message(message):
             if (len (info[1]) > 4) :
                 timeout = info[1][4]
 
-            locate_element(trace_id, locator, in_element, timeout)
+            await locate_element(trace_id, locator, in_element, timeout)
         elif cmd == 'run-js':
             js = info[1][2]
-            run_js(trace_id, js)
+            await run_js(trace_id, js)
         elif cmd == 'get-element':
             property = info[1][2]
             result = await get_element(trace_id, property)
         elif cmd == 'run-util-js':
             util_name = info[1][2]
-            run_util_js(trace_id, util_name)
+            await run_util_js(trace_id, util_name)
         elif cmd == 'rewrite-image-to-base64':
-            rewrite_image_to_base64(trace_id)
+            await rewrite_image_to_base64(trace_id)
         elif cmd == 'readability':
             html = info[1][2]
             result = readability_html(html)
@@ -254,10 +274,10 @@ async def on_message(message):
             result = scroll(trace_id, delta_y, delta_x)
         elif cmd == 'key-down':
             key = info[1][2]
-            result = key_down(trace_id, key)
+            result = await key_down(trace_id, key)
         elif cmd == 'key-up':
             key = info[1][2]
-            result = key_up(trace_id, key)
+            result = await key_up(trace_id, key)
         elif cmd == 'console':
             script = info[1][2]
             result = console(trace_id, script)
@@ -303,7 +323,8 @@ async def init():
     "Init User data."
     global browser, tabs, elements, utils_directory
     utils_directory = await get_emacs_var("auto-browser-utils-directory")
-    browser = Chromium(9222)
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.connect_over_cdp("http://localhost:9222")
     tabs = OrderedDict()
     elements = OrderedDict()
     print('Init')

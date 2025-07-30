@@ -36,18 +36,18 @@
   "Show twitter study page."
   (interactive)
   (let* ((url (file-name-concat auto-browser-twitter--base-url "home"))
-         (fowllowing-selector "@text()=Following"))
+         (fowllowing-selector "text=Following"))
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,url)
        (auto-browser-locate-element ,fowllowing-selector)
-       (auto-browser-run-js "this.click()")
+       (auto-browser-run-js "el => el.click()")
        (auto-browser-twitter-render)
        (auto-browser-twitter-next-tweet))
      trace-id)))
 
 (defun auto-browser-twitter-render (trace-id)
   (auto-browser-run-linearly
-   `((auto-browser-locate-element "@tag()=main")
+   `((auto-browser-locate-element "main")
      (auto-browser-get-element "html")
      (auto-browser-twitter-following-render))
    trace-id))
@@ -66,7 +66,7 @@
   "Show twitter study page."
   (interactive)
   (let* ((url (file-name-concat auto-browser-twitter--base-url "home"))
-         (main-selector "@tag()=main"))
+         (main-selector "main"))
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,url t)
        (auto-browser-key-down "ENTER")
@@ -76,7 +76,7 @@
 (defun auto-browser-twitter-press (key)
   "Show twitter study page."
   (let* ((url (file-name-concat auto-browser-twitter--base-url "home"))
-         (main-selector "@tag()=main"))
+         (main-selector "main"))
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,url t)
        (auto-browser-key-down ,key)
