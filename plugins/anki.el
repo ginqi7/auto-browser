@@ -194,7 +194,7 @@
 (defun auto-browser-anki-show-answer ()
   "Show anki answer page."
   (interactive)
-  (let* ((selector "text=Show Answer")
+  (let* ((selector "button:text(\"Show Answer\")")
          (url auto-browser-anki--study-url))
     (when auto-browser-anki--question-page-p
       (auto-browser-run-linearly
@@ -241,7 +241,7 @@
 
 (defun auto-browser-anki--mark (status)
   "Mark the item status."
-  (let* ((selector (concat "text=" status))
+  (let* ((selector (format "button:text(\"%s\")" status))
          (url auto-browser-anki--study-url))
     (unless auto-browser-anki--question-page-p
       (auto-browser-run-linearly
