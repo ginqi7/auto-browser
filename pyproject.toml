@@ -5,7 +5,7 @@ description = "An Emacs plugin for controlling the browser and accessing web pag
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "drissionpage>=4.1.0.15",
+    "playwright",
     "lxml-html-clean>=0.4.1",
     "readability-lxml>=0.8.1",
     "sexpdata>=1.0.2",

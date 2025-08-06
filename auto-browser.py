@@ -1,3 +1,13 @@
+# /// script
+# dependencies = [
+#     "playwright",
+#     "lxml-html-clean>=0.4.1",
+#     "readability-lxml>=0.8.1",
+#     "sexpdata>=1.0.2",
+#     "websocket-bridge-python>=0.0.2",
+# ]
+# ///
+
 import asyncio
 import json
 from time import sleep
@@ -18,15 +28,15 @@ def get_host(url):
     parsed_url = urlparse(url)
     return parsed_url.netloc
 
-def get_tabs():
-    default_context = browser.contexts[0]
+async def get_tabs():
+    default_context = await context()
     return default_context.pages
 
 async def get_tab(trace_id, url, match_host):
     global tabs
     if trace_id in tabs:
         return
-    all_tabs = get_tabs()
+    all_tabs = await get_tabs()
     for tab in all_tabs:
         print(tab)
         if tab.url == url or \
@@ -35,7 +45,7 @@ async def get_tab(trace_id, url, match_host):
             break
 
     if  trace_id not in tabs:
-        tabs[trace_id] = await browser.contexts[0].new_page()
+        tabs[trace_id] = await (await context()).new_page()
         await tabs[trace_id].goto(url)
     elif not match_host and \
          tabs[trace_id].url != url:
@@ -328,5 +338,17 @@ async def init():
     tabs = OrderedDict()
     elements = OrderedDict()
     print('Init')
+
+async def context():
+    contexts = browser.contexts
+    if len(contexts) < 1:
+        await reconnect()
+        contexts = browser.contexts
+    return contexts[0]
+
+async def reconnect():
+    global browser
+    browser = await playwright.chromium.connect_over_cdp("http://localhost:9222")
+
 
 asyncio.run(main())
