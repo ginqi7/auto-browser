@@ -4,7 +4,7 @@
 * 简介
 有许常用的在线服务，我希望能通过 Emacs 访问它们。因此开发了这个项目，Auto Browser 是 Emacs 和浏览器之间的桥梁，允许控制浏览器并快速访问网页。
 
-目前它只支持基于 Chromium 的浏览器，因为它依赖于 [[https://drissionpage.cn/get_start/installation][drissionpage]]。
+目前它只支持基于 Chromium 的浏览器，因为它依赖于 remote-debugging-port。
 
 Auto Browser 提供了一些简单的 API 来控制浏览器以及访问网页和页面上的元素。您可以在这里查看 API 参考。
 

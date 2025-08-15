@@ -9,14 +9,14 @@ There are many exciting online services, and I hope to access them using Emacs.
 
 Auto Browser is a bridge between Emacs and the browser, allowing control of the browser and quick access to web pages.
 
-It only supports Chromium-based browsers because it relies on [[https://drissionpage.cn/get_start/installation][drissionpage]].
+It only supports Chromium-based browsers because it relies on remote-debugging-port.
 
 Auto Browser provides some simple APIs to control the browser and access pages and elements on a page. You can see the API reference here.
 
 * Prerequisites
 
-*Chromium-based browsers*: Your daily browser.
-*Python* : 3.6 and above
+- *Chromium-based browsers*: Your daily browser.
+- *Python* : 3.6 and above
 
 ** Require Packages
 + *websocket-bridge*: A bridge that connects Emacs and Python programs via WebSocket.
