@@ -65,8 +65,10 @@ async def get_element(trace_id, property):
     global tabs, elements
     if property == 'html':
         element = elements[trace_id]
-        return [await element.evaluate("el => el.outerHTML")]
-    # return [getattr(elements[trace_id], property)]
+        if element:
+            return [await element.evaluate("el => el.outerHTML")]
+        else:
+            return ["The element does not exist."]
     return ""
 
 def handle_arg_types(arg):

@@ -173,7 +173,8 @@
 (defun auto-browser-anki-show (trace-id html)
   "Show anki HTML."
   (let ((shr-external-rendering-functions auto-browser-anki-rendering-functions))
-
+    (when (string= html "The element does not exist.")
+      (setq html "Congratulations! You have finished this deck for now."))
     (auto-browser-render-html (auto-browser-add-count-info html)
                               auto-browser-anki--buffer-name)
     (anki-mode)
