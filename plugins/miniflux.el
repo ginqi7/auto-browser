@@ -59,7 +59,9 @@
 (defun auto-browser-miniflux-render-article (trace-id html)
   "Render article HTML."
   (let ((shr-external-rendering-functions auto-browser-miniflux-rendering-functions))
-    (auto-browser-render-html html "*miniflux-article*")))
+    (auto-browser-render-html html "*miniflux-article*")
+    (with-current-buffer "*miniflux-article*"
+      (miniflux-article-mode 1))))
 
 (defun auto-browser-miniflux-render-unread (trace-id html)
   "Render Unread List by tabulated-list."
@@ -113,6 +115,9 @@
                                             :time time
                                             :url url)))))
     data))
+
+(define-minor-mode miniflux-article-mode
+  "A minor mode in miniflux article buffer.")
 
 (provide 'miniflux)
 
