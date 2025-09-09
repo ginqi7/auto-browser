@@ -24,32 +24,33 @@ from readability import Document
 from urllib.parse import urlparse
 from collections import OrderedDict
 
+
 def get_host(url):
     parsed_url = urlparse(url)
     return parsed_url.netloc
+
 
 async def get_tabs():
     default_context = await context()
     return default_context.pages
 
+
 async def get_tab(trace_id, url, match_host):
     global tabs
-    if trace_id in tabs:
-        return
+    # if trace_id in tabs:
+    #     return
     all_tabs = await get_tabs()
     for tab in all_tabs:
         print(tab)
-        if tab.url == url or \
-           get_host(tab.url) == get_host(url):
+        if tab.url == url or get_host(tab.url) == get_host(url):
             tabs[trace_id] = tab
             break
-
-    if  trace_id not in tabs:
+    if trace_id not in tabs:
         tabs[trace_id] = await (await context()).new_page()
         await tabs[trace_id].goto(url)
-    elif not match_host and \
-         tabs[trace_id].url != url:
+    elif not match_host and tabs[trace_id].url != url:
         await tabs[trace_id].goto(url)
+
 
 async def locate_element(trace_id, locator, in_element, timeout):
     global tabs, elements
@@ -61,15 +62,19 @@ async def locate_element(trace_id, locator, in_element, timeout):
         elements[trace_id] = await tabs[trace_id].query_selector(locator)
         # elements[trace_id] = tabs[trace_id].ele(locator, timeout=timeout)
 
+
 async def get_element(trace_id, property):
     global tabs, elements
-    if property == 'html':
-        element = elements[trace_id]
-        if element:
+    element = elements[trace_id]
+    if element:
+        if property == "html":
             return [await element.evaluate("el => el.outerHTML")]
-        else:
-            return ["The element does not exist."]
+        elif property == "href":
+            return [await element.evaluate("el => el.href")]
+    else:
+        return ["The element does not exist."]
     return ""
+
 
 def handle_arg_types(arg):
     if isinstance(arg, str) and arg.startswith("'"):
@@ -77,11 +82,13 @@ def handle_arg_types(arg):
 
     return sexpdata.Quoted(arg)
 
+
 async def eval_in_emacs(method_name, args):
-    args = [sexpdata.Symbol(method_name)] + list(map(handle_arg_types, args))    # type: ignore
+    args = [sexpdata.Symbol(method_name)] + list(map(handle_arg_types, args))  # type: ignore
     sexp = sexpdata.dumps(args)
     # print(sexp)
     await bridge.eval_in_emacs(sexp)
+
 
 async def run_js(trace_id, js):
     global elements
@@ -89,9 +96,10 @@ async def run_js(trace_id, js):
     if element:
         await element.evaluate(js)
 
+
 def read_file_contents(file_path):
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
+        with open(file_path, "r", encoding="utf-8") as file:
             contents = file.read()
             return contents
     except FileNotFoundError:
@@ -99,17 +107,19 @@ def read_file_contents(file_path):
     except IOError:
         print(f"Error reading the file.: {file_path}")
 
+
 async def run_util_js(tab_id, util_name):
     global tabs, utils_directory
     full_path = os.path.join(utils_directory, util_name)
     content = read_file_contents(full_path)
     await tabs[tab_id].evaluate(f"() => { {content} }")
 
+
 async def rewrite_image_to_base64(tab_id):
     global tabs, utils_directory
-    for el in await tabs[tab_id].query_selector_all('img'):
+    for el in await tabs[tab_id].query_selector_all("img"):
         for i in range(10):
-            if await el.evaluate("el => el.complete") :
+            if await el.evaluate("el => el.complete"):
                 break
             sleep(0.2)
         full_path = os.path.join(utils_directory, "rewrite-image-to-base64.js")
@@ -124,46 +134,55 @@ def delete_oldest():
     if len(elements) > 50:
         elements.popitem(last=False)
 
+
 def readability_html(html):
     doc = Document(html)
     return [doc.summary()]
 
-def input(trace_id, str, clear):
+
+async def input(trace_id, str, clear):
     global tabs, elements
-    elements[trace_id].input(str, clear=clear)
+    await elements[trace_id].fill(str)
+
 
 def stream_response_finished(trace_id, kwargs):
     global request_status
-    if kwargs['requestId'] in request_status:
-        request_status[kwargs['requestId']] = True
+    if kwargs["requestId"] in request_status:
+        request_status[kwargs["requestId"]] = True
 
     print(kwargs)
+
 
 def stream_response_filter(trace_id, url_pattern, kwargs):
     global request_status
 
     # print(kwargs)
-    if 'request' in kwargs:
-        if 'url' in kwargs['request']:
-            base_path = os.path.basename(kwargs['request']['url'])
-            request_status[kwargs['requestId']] = False
+    if "request" in kwargs:
+        if "url" in kwargs["request"]:
+            base_path = os.path.basename(kwargs["request"]["url"])
+            request_status[kwargs["requestId"]] = False
             if re.match(url_pattern, base_path):
-                tabs[trace_id].listen._driver.set_callback("Network.loadingFinished",
-                                                           lambda **kwargs: stream_response_finished(trace_id, kwargs),
-                                                           True)
-                tabs[trace_id].listen._driver.run("Network.streamResourceContent", requestId=kwargs['requestId'])
+                tabs[trace_id].listen._driver.set_callback(
+                    "Network.loadingFinished",
+                    lambda **kwargs: stream_response_finished(trace_id, kwargs),
+                    True,
+                )
+                tabs[trace_id].listen._driver.run(
+                    "Network.streamResourceContent", requestId=kwargs["requestId"]
+                )
+
 
 async def stream_response_handle(trace_id, callback, kwargs):
-
-    if 'data' in kwargs:
+    if "data" in kwargs:
         # print(kwargs)
-        base64_string = kwargs['data']
+        base64_string = kwargs["data"]
         args = [trace_id, base64_string]
         await eval_in_emacs(callback, args)
 
+
 def stream_response_wait():
     global request_status
-    for i in range(1500): # 300 seconds
+    for i in range(1500):  # 300 seconds
         sleep(0.2)
         if request_status:
             print(request_status)
@@ -176,14 +195,21 @@ def stream_response(trace_id, url_pattern, callback):
     request_status = {}
     print(url_pattern)
     tabs[trace_id].listen.start(url_pattern, True)
-    tabs[trace_id].listen._driver.set_callback("Network.requestWillBeSent",
-                                               lambda **kwargs: stream_response_filter(trace_id, url_pattern, kwargs),
-                                               True)
-    tabs[trace_id].listen._driver.set_callback("Network.dataReceived",
-                                               lambda **kwargs: asyncio.run(stream_response_handle(trace_id, callback, kwargs)),
-                                               True)
+    tabs[trace_id].listen._driver.set_callback(
+        "Network.requestWillBeSent",
+        lambda **kwargs: stream_response_filter(trace_id, url_pattern, kwargs),
+        True,
+    )
+    tabs[trace_id].listen._driver.set_callback(
+        "Network.dataReceived",
+        lambda **kwargs: asyncio.run(
+            stream_response_handle(trace_id, callback, kwargs)
+        ),
+        True,
+    )
     stream_response_wait()
     tabs[trace_id].listen.stop()
+
 
 def wait_response(trace_id, url_pattern):
     print(url_pattern)
@@ -191,41 +217,48 @@ def wait_response(trace_id, url_pattern):
     res = tabs[trace_id].listen.wait()
     data = res.response.body
     if type(data) is bytes:
-        data = data.decode('utf-8')
+        data = data.decode("utf-8")
     tabs[trace_id].listen.stop()
     print(data)
     return [data]
 
-def click(trace_id):
+
+async def click(trace_id):
     global tabs, elements
     print(elements[trace_id])
-    elements[trace_id].click()
+    await elements[trace_id].click()
+
 
 def scroll(trace_id, delta_y, delta_x):
     global tabs, elements
     tabs[trace_id].actions.scroll(delta_y=delta_y, delta_x=delta_x)
 
+
 async def key_down(trace_id, key):
     global tabs, elements
     await tabs[trace_id].keyboard.down(key)
+
 
 async def key_up(trace_id, key):
     global tabs, elements
     await tabs[trace_id].keyboard.up(key)
 
+
 def refresh(trace_id):
     global tabs, elements
     tabs[trace_id].reload()
+
 
 def console(trace_id, script):
     global tabs, elements
     tab = tabs[trace_id]
     tab.console.start()
-    tab.run_js(script+';console.log("Finished");',timeout=10)
+    tab.run_js(script + ';console.log("Finished");', timeout=10)
     data = tab.console.wait()
     tab.console.stop()
     text = data.text
     return [text]
+
 
 # dispatch message received from Emacs.
 async def on_message(message):
@@ -236,75 +269,76 @@ async def on_message(message):
         trace_id = info[1][1]
         result = None
         delete_oldest()
-        if cmd == 'get-tab':
+        if cmd == "get-tab":
             url = info[1][2]
             match_host = False
             if len(info[1]) >= 4:
                 match_host = info[1][3]
             await get_tab(trace_id, url, match_host)
-        elif cmd == 'locate-element':
+        elif cmd == "locate-element":
             locator = info[1][2]
             in_element = False
-            if (len (info[1]) > 3) :
+            if len(info[1]) > 3:
                 in_element = info[1][3]
-            if (len (info[1]) > 4) :
+            if len(info[1]) > 4:
                 timeout = info[1][4]
 
             await locate_element(trace_id, locator, in_element, timeout)
-        elif cmd == 'run-js':
+        elif cmd == "run-js":
             js = info[1][2]
             await run_js(trace_id, js)
-        elif cmd == 'get-element':
+        elif cmd == "get-element":
             property = info[1][2]
             result = await get_element(trace_id, property)
-        elif cmd == 'run-util-js':
+        elif cmd == "run-util-js":
             util_name = info[1][2]
             await run_util_js(trace_id, util_name)
-        elif cmd == 'rewrite-image-to-base64':
+        elif cmd == "rewrite-image-to-base64":
             await rewrite_image_to_base64(trace_id)
-        elif cmd == 'readability':
+        elif cmd == "readability":
             html = info[1][2]
             result = readability_html(html)
-        elif cmd == 'input':
+        elif cmd == "input":
             input_str = info[1][2]
             clear = False
-            if (len (info[1]) > 3) :
+            if len(info[1]) > 3:
                 clear = info[1][3]
-            input(trace_id, input_str, clear)
-        elif cmd == 'wait-response':
+            await input(trace_id, input_str, clear)
+        elif cmd == "wait-response":
             url_pattern = info[1][2]
             result = wait_response(trace_id, url_pattern)
-        elif cmd == 'stream-response':
+        elif cmd == "stream-response":
             url_pattern = info[1][2]
             callback = info[1][3]
             result = stream_response(trace_id, url_pattern, callback)
-        elif cmd == 'click':
-            result = click(trace_id)
-        elif cmd == 'scroll':
+        elif cmd == "click":
+            result = await click(trace_id)
+        elif cmd == "scroll":
             delta_y = info[1][2]
             delta_x = info[1][3]
             result = scroll(trace_id, delta_y, delta_x)
-        elif cmd == 'key-down':
+        elif cmd == "key-down":
             key = info[1][2]
             result = await key_down(trace_id, key)
-        elif cmd == 'key-up':
+        elif cmd == "key-up":
             key = info[1][2]
             result = await key_up(trace_id, key)
-        elif cmd == 'console':
+        elif cmd == "console":
             script = info[1][2]
             result = console(trace_id, script)
-        elif cmd == 'refresh':
+        elif cmd == "refresh":
             result = refresh(trace_id)
 
         else:
-            print(f'not fount handler for {cmd}', flush=True)
+            print(f"not fount handler for {cmd}", flush=True)
         args = [trace_id]
-        if result :
+        if result:
             args = args + result
             # print(args)
         await eval_in_emacs("auto-browser--run-linearly", args)
     except Exception as _:
         import traceback
+
         print(traceback.format_exc())
 
 
@@ -325,8 +359,8 @@ async def get_emacs_var(var_name: str):
     var_value = await bridge.get_emacs_var(var_name)
     if isinstance(var_value, str):
         var_value = var_value.strip('"')
-    print(f'{var_name} : {var_value}')
-    if var_value == 'null':
+    print(f"{var_name} : {var_value}")
+    if var_value == "null":
         return None
     return var_value
 
@@ -339,7 +373,8 @@ async def init():
     browser = await playwright.chromium.connect_over_cdp("http://localhost:9222")
     tabs = OrderedDict()
     elements = OrderedDict()
-    print('Init')
+    print("Init")
+
 
 async def context():
     contexts = browser.contexts
@@ -347,6 +382,7 @@ async def context():
         await reconnect()
         contexts = browser.contexts
     return contexts[0]
+
 
 async def reconnect():
     global browser

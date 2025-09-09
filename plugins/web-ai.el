@@ -30,7 +30,7 @@
   "Web AI URL."
   :type 'string)
 
-(defcustom auto-browser-web-ai-input-selector "tag:textarea"
+(defcustom auto-browser-web-ai-input-selector "textarea"
   "The selector of the input element."
   :type 'string)
 
@@ -70,8 +70,10 @@
      `((auto-browser-get-tab ,auto-browser-web-ai-url)
        (auto-browser-locate-element auto-browser-web-ai-input-selector)
        (auto-browser-input ,(concat prompt "\n"))
-       (auto-browser-show-dialogue ,prompt)))))
+       (auto-browser-locate-element ".__button-1u2ut4e-dlsmd")
+       (auto-browser-click)))))
 
+;; __button-1u2ut4e-dlsmd
 
 (defun decode-base64-to-unicode (base64-str)
   "Decode a Base64 encoded string to a Unicode string."
