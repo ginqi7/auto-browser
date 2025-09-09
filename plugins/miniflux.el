@@ -46,7 +46,7 @@
        (auto-browser-miniflux-render-unread)))))
 
 (defun auto-browser-miniflux-open-article ()
-  "Open miniflux article page."
+  "Open the miniflux article page."
   (interactive)
   (let ((url (file-name-concat auto-browser-miniflux-base-url (tabulated-list-get-id))))
     (auto-browser-run-linearly
@@ -55,6 +55,21 @@
        (auto-browser-locate-element "#main")
        (auto-browser-get-element "html")
        (auto-browser-miniflux-render-article)))))
+
+(defun auto-browser-miniflux-next-article ()
+  "Open a Next miniflux article page."
+  (interactive)
+  (let ((url auto-browser-miniflux-base-url))
+    (auto-browser-run-linearly
+     `((auto-browser-get-tab ,url t)
+       (auto-browser-locate-element "a:text(\"Next\")")
+       (auto-browser-get-element "href")
+       (auto-browser-get-tab)
+       (auto-browser-rewrite-image-to-base64)
+       (auto-browser-locate-element "#main")
+       (auto-browser-get-element "html")
+       (auto-browser-miniflux-render-article)))))
+
 
 (defun auto-browser-miniflux-render-article (trace-id html)
   "Render article HTML."
