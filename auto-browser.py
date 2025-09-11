@@ -52,12 +52,12 @@ async def get_tab(trace_id, url, match_host):
         await tabs[trace_id].goto(url)
 
 
-async def locate_element(trace_id, locator, in_element, timeout):
+async def locate_element(trace_id, locator, options):
     global tabs, elements
-    if not timeout:
-        timeout = 1
-    if in_element:
-        elements[trace_id] = elements[trace_id].ele(locator, timeout=timeout)
+    if "nth" in options:
+        elements[trace_id] = (await tabs[trace_id].query_selector_all(locator))[
+            options["nth"]
+        ]
     else:
         elements[trace_id] = await tabs[trace_id].query_selector(locator)
         # elements[trace_id] = tabs[trace_id].ele(locator, timeout=timeout)
@@ -277,13 +277,10 @@ async def on_message(message):
             await get_tab(trace_id, url, match_host)
         elif cmd == "locate-element":
             locator = info[1][2]
-            in_element = False
+            options = {}
             if len(info[1]) > 3:
-                in_element = info[1][3]
-            if len(info[1]) > 4:
-                timeout = info[1][4]
-
-            await locate_element(trace_id, locator, in_element, timeout)
+                options = info[1][3] or {}
+            await locate_element(trace_id, locator, options)
         elif cmd == "run-js":
             js = info[1][2]
             await run_js(trace_id, js)

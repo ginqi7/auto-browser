@@ -38,14 +38,33 @@
   "The AI response matched URL regexp. python regexp."
   :type 'string)
 
-(defun auto-browser-web-ai-input ()
+(defun auto-browser-web-ai-input (&optional prompt)
   "Send Input string to Web AI."
   (interactive)
-  (let ((prompt (read-string "Input your prompt: ")))
-    (auto-browser-run-linearly
-     `((auto-browser-get-tab ,auto-browser-web-ai-url)
-       (auto-browser-locate-element auto-browser-web-ai-input-selector)
-       (auto-browser-input ,(concat prompt "\n"))))))
+  (unless prompt
+    (setq prompt (read-string "Input your prompt: ")))
+  (auto-browser-run-linearly
+   `((auto-browser-get-tab ,auto-browser-web-ai-url)
+     (auto-browser-locate-element auto-browser-web-ai-input-selector)
+     (auto-browser-input ,(concat prompt "\n"))
+     (auto-browser-locate-element ".__button-1u2ut4e-dlsmd")
+     (auto-browser-click))))
+
+
+(defun auto-browser-web-ai-last-answer ()
+  (interactive)
+  (auto-browser-run-linearly
+   `((auto-browser-get-tab ,auto-browser-web-ai-url t)
+     (auto-browser-locate-element "div.markdown-body" :nth -1)
+     (auto-browser-get-element "html")
+     (auto-browser-web-ai-render-answer))))
+
+(defun auto-browser-web-ai-render-answer (trace-id html)
+  (auto-browser-render-html html "*web-ai-answer*"))
+
+
+
+
 
 (defun auto-browser-web-ai-show-chat-box ()
   (interactive)
