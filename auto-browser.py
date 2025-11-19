@@ -18,53 +18,51 @@ import re
 
 import websocket_bridge_python
 
-import asyncio
-from playwright.async_api import async_playwright, Playwright
+from playwright.async_api import async_playwright
 from readability import Document
 from urllib.parse import urlparse
 from collections import OrderedDict
 
 
-def get_host(url):
-    parsed_url = urlparse(url)
-    return parsed_url.netloc
+def get_host(url) -> str:
+    """Get host from URL."""
+    return urlparse(url).netloc
 
 
-async def get_tabs():
+async def get_pages():
     default_context = await context()
     return default_context.pages
 
 
-async def get_tab(trace_id, url, match_host):
-    global tabs
-    # if trace_id in tabs:
+async def get_page(trace_id, url, match_host):
+    global pages
+    # if trace_id in pages:
     #     return
-    all_tabs = await get_tabs()
-    for tab in all_tabs:
-        print(tab)
-        if tab.url == url or get_host(tab.url) == get_host(url):
-            tabs[trace_id] = tab
+    all_pages = await get_pages()
+    for page in all_pages:
+        print(page)
+        if page.url == url or get_host(page.url) == get_host(url):
+            pages[trace_id] = page
             break
-    if trace_id not in tabs:
-        tabs[trace_id] = await (await context()).new_page()
-        await tabs[trace_id].goto(url)
-    elif not match_host and tabs[trace_id].url != url:
-        await tabs[trace_id].goto(url)
+    if trace_id not in pages:
+        pages[trace_id] = await (await context()).new_page()
+        await pages[trace_id].goto(url)
+    elif not match_host and pages[trace_id].url != url:
+        await pages[trace_id].goto(url)
 
 
-async def locate_element(trace_id, locator, in_element, timeout):
-    global tabs, elements
+async def locate_element(trace_id, locator, nth, timeout):
+    global pages, elements
     if not timeout:
         timeout = 1
-    if in_element:
-        elements[trace_id] = elements[trace_id].ele(locator, timeout=timeout)
+    if nth:
+        elements[trace_id] = pages[trace_id].locator(locator).nth(nth)
     else:
-        elements[trace_id] = await tabs[trace_id].query_selector(locator)
-        # elements[trace_id] = tabs[trace_id].ele(locator, timeout=timeout)
+        elements[trace_id] = pages[trace_id].locator(locator)
 
 
 async def get_element(trace_id, property):
-    global tabs, elements
+    global pages, elements
     element = elements[trace_id]
     if element:
         if property == "html":
@@ -109,15 +107,15 @@ def read_file_contents(file_path):
 
 
 async def run_util_js(tab_id, util_name):
-    global tabs, utils_directory
+    global pages, utils_directory
     full_path = os.path.join(utils_directory, util_name)
     content = read_file_contents(full_path)
-    await tabs[tab_id].evaluate(f"() => { {content} }")
+    await pages[tab_id].evaluate(f"() => { {content} }")
 
 
 async def rewrite_image_to_base64(tab_id):
-    global tabs, utils_directory
-    for el in await tabs[tab_id].query_selector_all("img"):
+    global pages, utils_directory
+    for el in await pages[tab_id].query_selector_all("img"):
         for i in range(10):
             if await el.evaluate("el => el.complete"):
                 break
@@ -128,9 +126,9 @@ async def rewrite_image_to_base64(tab_id):
 
 
 def delete_oldest():
-    global tabs, elements
-    if len(tabs) > 50:
-        tabs.popitem(last=False)
+    global pages, elements
+    if len(pages) > 50:
+        pages.popitem(last=False)
     if len(elements) > 50:
         elements.popitem(last=False)
 
@@ -141,8 +139,33 @@ def readability_html(html):
 
 
 async def input(trace_id, str, clear):
-    global tabs, elements
+    global pages, elements
     await elements[trace_id].fill(str)
+    await elements[trace_id].press("Enter")
+
+
+async def monitor_element(trace_id, selector, callback):
+    global pages, elements
+    while True:
+        try:
+            # 找到定位器
+            element_locator = pages[trace_id].locator(selector)
+
+            # 检查元素是否可见
+            if await element_locator.is_visible():
+                print(
+                    f"🔥🔥🔥 [Monitoring Task Alert]! Element '{selector}' has appeared!"
+                )
+                args = [trace_id]
+                await eval_in_emacs(callback, args)
+                break
+
+            await asyncio.sleep(0.5)
+
+        except Exception as e:
+            # 如果页面关闭或发生其他错误，优雅地退出循环
+            print(f"❌ [Monitoring Task Error] Monitoring task exited: {e}")
+            break
 
 
 def stream_response_finished(trace_id, kwargs):
@@ -162,12 +185,12 @@ def stream_response_filter(trace_id, url_pattern, kwargs):
             base_path = os.path.basename(kwargs["request"]["url"])
             request_status[kwargs["requestId"]] = False
             if re.match(url_pattern, base_path):
-                tabs[trace_id].listen._driver.set_callback(
+                pages[trace_id].listen._driver.set_callback(
                     "Network.loadingFinished",
                     lambda **kwargs: stream_response_finished(trace_id, kwargs),
                     True,
                 )
-                tabs[trace_id].listen._driver.run(
+                pages[trace_id].listen._driver.run(
                     "Network.streamResourceContent", requestId=kwargs["requestId"]
                 )
 
@@ -194,13 +217,13 @@ def stream_response(trace_id, url_pattern, callback):
     global request_status
     request_status = {}
     print(url_pattern)
-    tabs[trace_id].listen.start(url_pattern, True)
-    tabs[trace_id].listen._driver.set_callback(
+    pages[trace_id].listen.start(url_pattern, True)
+    pages[trace_id].listen._driver.set_callback(
         "Network.requestWillBeSent",
         lambda **kwargs: stream_response_filter(trace_id, url_pattern, kwargs),
         True,
     )
-    tabs[trace_id].listen._driver.set_callback(
+    pages[trace_id].listen._driver.set_callback(
         "Network.dataReceived",
         lambda **kwargs: asyncio.run(
             stream_response_handle(trace_id, callback, kwargs)
@@ -208,56 +231,55 @@ def stream_response(trace_id, url_pattern, callback):
         True,
     )
     stream_response_wait()
-    tabs[trace_id].listen.stop()
+    pages[trace_id].listen.stop()
 
 
 def wait_response(trace_id, url_pattern):
     print(url_pattern)
-    tabs[trace_id].listen.start(url_pattern, True)
-    res = tabs[trace_id].listen.wait()
+    pages[trace_id].listen.start(url_pattern, True)
+    res = pages[trace_id].listen.wait()
     data = res.response.body
     if type(data) is bytes:
         data = data.decode("utf-8")
-    tabs[trace_id].listen.stop()
+    pages[trace_id].listen.stop()
     print(data)
     return [data]
 
 
 async def click(trace_id):
-    global tabs, elements
+    global pages, elements
     print(elements[trace_id])
     await elements[trace_id].click()
 
 
 def scroll(trace_id, delta_y, delta_x):
-    global tabs, elements
-    tabs[trace_id].actions.scroll(delta_y=delta_y, delta_x=delta_x)
+    global pages, elements
+    pages[trace_id].actions.scroll(delta_y=delta_y, delta_x=delta_x)
 
 
 async def key_down(trace_id, key):
-    global tabs, elements
-    await tabs[trace_id].keyboard.down(key)
+    global pages, elements
+    await pages[trace_id].keyboard.down(key)
 
 
 async def key_up(trace_id, key):
-    global tabs, elements
-    await tabs[trace_id].keyboard.up(key)
+    global pages, elements
+    await pages[trace_id].keyboard.up(key)
 
 
 def refresh(trace_id):
-    global tabs, elements
-    tabs[trace_id].reload()
+    global pages, elements
+    pages[trace_id].reload()
 
 
-def console(trace_id, script):
-    global tabs, elements
-    tab = tabs[trace_id]
-    tab.console.start()
-    tab.run_js(script + ';console.log("Finished");', timeout=10)
-    data = tab.console.wait()
-    tab.console.stop()
-    text = data.text
-    return [text]
+async def console(trace_id, script):
+    global pages, elements
+    page = pages[trace_id]
+    async with page.expect_console_message() as msg_info:
+        # Issue console.log inside the page
+        await page.evaluate(script)
+    msg = await msg_info.value
+    return [msg]
 
 
 # dispatch message received from Emacs.
@@ -269,21 +291,20 @@ async def on_message(message):
         trace_id = info[1][1]
         result = None
         delete_oldest()
-        if cmd == "get-tab":
+        if cmd == "get-page":
             url = info[1][2]
             match_host = False
             if len(info[1]) >= 4:
                 match_host = info[1][3]
-            await get_tab(trace_id, url, match_host)
+            await get_page(trace_id, url, match_host)
         elif cmd == "locate-element":
             locator = info[1][2]
-            in_element = False
+            nth = None
             if len(info[1]) > 3:
-                in_element = info[1][3]
+                nth = info[1][3]
             if len(info[1]) > 4:
                 timeout = info[1][4]
-
-            await locate_element(trace_id, locator, in_element, timeout)
+            await locate_element(trace_id, locator, nth, timeout)
         elif cmd == "run-js":
             js = info[1][2]
             await run_js(trace_id, js)
@@ -325,7 +346,11 @@ async def on_message(message):
             result = await key_up(trace_id, key)
         elif cmd == "console":
             script = info[1][2]
-            result = console(trace_id, script)
+            result = await console(trace_id, script)
+        elif cmd == "monitor":
+            selector = info[1][2]
+            callback = info[1][3]
+            result = await monitor_element(trace_id, selector, callback)
         elif cmd == "refresh":
             result = refresh(trace_id)
 
@@ -367,11 +392,11 @@ async def get_emacs_var(var_name: str):
 
 async def init():
     "Init User data."
-    global browser, tabs, elements, utils_directory
+    global browser, pages, elements, utils_directory
     utils_directory = await get_emacs_var("auto-browser-utils-directory")
     playwright = await async_playwright().start()
     browser = await playwright.chromium.connect_over_cdp("http://localhost:9222")
-    tabs = OrderedDict()
+    pages = OrderedDict()
     elements = OrderedDict()
     print("Init")
 
