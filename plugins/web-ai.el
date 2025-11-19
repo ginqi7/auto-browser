@@ -30,7 +30,7 @@
   "Web AI URL."
   :type 'string)
 
-(defcustom auto-browser-web-ai-input-selector "textarea"
+(defcustom auto-browser-web-ai-input-selector ".n-input__textarea-el"
   "The selector of the input element."
   :type 'string)
 
@@ -45,13 +45,17 @@
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,auto-browser-web-ai-url)
        (auto-browser-locate-element auto-browser-web-ai-input-selector)
-       (auto-browser-input ,(concat prompt "\n"))))))
+       (auto-browser-input ,(concat prompt))
+       (auto-browser-monitor ".fa-paper-plane" #'auto-browser-web-ai-notify)))))
+
+(defun auto-browser-web-ai-notify (&rest args)
+  (auto-browser-web-ai-show-chat-box))
 
 (defun auto-browser-web-ai-show-chat-box ()
   (interactive)
   (auto-browser-run-linearly
    `((auto-browser-get-tab ,auto-browser-web-ai-url)
-     (auto-browser-locate-element "#message-wrapper")
+     (auto-browser-locate-element ".aa-html-content" -1)
      (auto-browser-get-element "html")
      (auto-browser-web-ai-render-chat-box))))
 
@@ -61,44 +65,6 @@
     (insert html)
     (shr-render-region (point-min) (point-max))
     (pop-to-buffer (current-buffer))))
-
-(defun auto-browser-web-ai-just-input ()
-  "Send Input string to Web AI."
-  (interactive)
-  (let ((prompt (read-string "Input your prompt: ")))
-    (auto-browser-run-linearly
-     `((auto-browser-get-tab ,auto-browser-web-ai-url)
-       (auto-browser-locate-element auto-browser-web-ai-input-selector)
-       (auto-browser-input ,(concat prompt "\n"))
-       (auto-browser-locate-element ".__button-1u2ut4e-dlsmd")
-       (auto-browser-click)))))
-
-;; __button-1u2ut4e-dlsmd
-
-(defun decode-base64-to-unicode (base64-str)
-  "Decode a Base64 encoded string to a Unicode string."
-  (let ((decoded-bytes (base64-decode-string base64-str)))
-    (decode-coding-string decoded-bytes 'utf-8)))
-
-(defun auto-browser-show-msg (trace-id base64-str)
-  "Show AI dialogue."
-  (with-current-buffer "*web-ai*"
-    (goto-char (point-max))
-    (let ((buffer-read-only))
-      (insert (decode-base64-to-unicode base64-str)))))
-
-(defun auto-browser-show-dialogue (trace-id prompt)
-  "Show AI dialogue."
-  (switch-to-buffer "*web-ai*")
-  (goto-char (point-max))
-  (let ((buffer-read-only))
-    (insert "\n# " prompt "\n")
-    (setq buffer-read-only t)
-    (markdown-mode))
-  (auto-browser-run-linearly
-   `((auto-browser-stream-response ,auto-browser-web-ai-response-regexp "auto-browser-show-msg"))
-   trace-id))
-
 
 (provide 'web-ai)
 ;;; web-ai.el ends here
