@@ -94,7 +94,7 @@
   "Call Auto Browser function."
   (interactive)
   (websocket-bridge-call "auto-browser"
-                         "get-tab"
+                         "get-page"
                          trace-id
                          url
                          match_host))
@@ -213,12 +213,13 @@
                          trace-id
                          html))
 
-(defun auto-browser-input (trace-id input-str &optional clear)
+(defun auto-browser-input (trace-id input-str &optional enter responseMatch)
   (websocket-bridge-call "auto-browser"
                          "input"
                          trace-id
                          input-str
-                         clear))
+                         enter
+                         responseMatch))
 
 (defun auto-browser-monitor (trace-id selector callback)
   (websocket-bridge-call "auto-browser"

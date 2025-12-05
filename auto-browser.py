@@ -11,6 +11,7 @@
 import asyncio
 import json
 from time import sleep
+from typing import final
 
 import sexpdata
 import os
@@ -51,14 +52,17 @@ async def get_page(trace_id, url, match_host):
         await pages[trace_id].goto(url)
 
 
-async def locate_element(trace_id, locator, nth, timeout):
+async def locate_element(trace_id, locator_str, nth, timeout):
     global pages, elements
-    if not timeout:
+    if timeout is None:
         timeout = 1
-    if nth:
-        elements[trace_id] = pages[trace_id].locator(locator).nth(nth)
+    if nth is None:
+        nth = 0
+    locator = pages[trace_id].locator(locator_str)
+    if await locator.count() > 0:
+        elements[trace_id] = locator.nth(nth)
     else:
-        elements[trace_id] = pages[trace_id].locator(locator)
+        elements[trace_id] = None
 
 
 async def get_element(trace_id, property):
@@ -138,10 +142,29 @@ def readability_html(html):
     return [doc.summary()]
 
 
-async def input(trace_id, str, clear):
+def event_stream_parse(text):
+    lines = list(filter(lambda line: line.startswith("data: "), text.split("\n")))
+    json_str = lines[-2][6:]
+    data = json.loads(json_str)["data"]["aiText"]
+    return data
+
+
+async def input(trace_id, str, enter, response_match):
     global pages, elements
     await elements[trace_id].fill(str)
-    await elements[trace_id].press("Enter")
+    if enter and response_match:
+        async with pages[trace_id].expect_response(response_match) as response_info:
+            await elements[trace_id].press("Enter")
+        response = await response_info.value
+        text = await response.text()
+        rightText = text.encode("windows-1252", errors="ignore").decode(
+            "utf-8", errors="ignore"
+        )
+        data = event_stream_parse(rightText)
+        return [data]
+    if enter:
+        await elements[trace_id].press("Enter")
+    return ""
 
 
 async def monitor_element(trace_id, selector, callback):
@@ -321,10 +344,12 @@ async def on_message(message):
             result = readability_html(html)
         elif cmd == "input":
             input_str = info[1][2]
-            clear = False
+            enter = False
             if len(info[1]) > 3:
-                clear = info[1][3]
-            await input(trace_id, input_str, clear)
+                enter = info[1][3]
+            if len(info[1]) > 4:
+                response_match = info[1][4]
+            result = await input(trace_id, input_str, enter, response_match)
         elif cmd == "wait-response":
             url_pattern = info[1][2]
             result = wait_response(trace_id, url_pattern)

@@ -188,7 +188,7 @@
          (selector "audio"))
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,url)
-       (auto-browser-locate-element ,selector nil 0.2)
+       (auto-browser-locate-element ,selector 0)
        (auto-browser-run-js "el => el.play()"))
      trace-id)))
 
