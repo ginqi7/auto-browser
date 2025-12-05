@@ -45,8 +45,16 @@
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,auto-browser-web-ai-url)
        (auto-browser-locate-element auto-browser-web-ai-input-selector)
-       (auto-browser-input ,(concat prompt))
-       (auto-browser-monitor ".fa-paper-plane" #'auto-browser-web-ai-notify)))))
+       (auto-browser-input ,prompt t "**/completions")
+       (auto-browser-web-ai-render)))))
+;; (auto-browser-monitor ".fa-paper-plane" #'auto-browser-web-ai-notify)
+
+(defun auto-browser-web-ai-render (traceId data)
+  (with-current-buffer (get-buffer-create "*web-ai*")
+    (erase-buffer)
+    (insert data)
+    (markdown-mode)
+    (switch-to-buffer (current-buffer))))
 
 (defun auto-browser-web-ai-notify (&rest args)
   (auto-browser-web-ai-show-chat-box))
