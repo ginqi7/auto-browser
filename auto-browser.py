@@ -5,6 +5,7 @@
 #     "readability-lxml>=0.8.1",
 #     "sexpdata>=1.0.2",
 #     "websocket-bridge-python>=0.0.2",
+#     "ftfy",
 # ]
 # ///
 
@@ -23,6 +24,8 @@ from playwright.async_api import async_playwright
 from readability import Document
 from urllib.parse import urlparse
 from collections import OrderedDict
+
+from ftfy import fix_encoding
 
 
 def get_host(url) -> str:
@@ -157,9 +160,7 @@ async def input(trace_id, str, enter, response_match):
             await elements[trace_id].press("Enter")
         response = await response_info.value
         text = await response.text()
-        rightText = text.encode("windows-1252", errors="ignore").decode(
-            "utf-8", errors="ignore"
-        )
+        rightText = fix_encoding(text)
         data = event_stream_parse(rightText)
         return [data]
     if enter:
