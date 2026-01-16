@@ -26,6 +26,11 @@
 
 (require 'auto-browser)
 
+(defcustom auto-browser-save-directory (file-name-concat
+                                        user-emacs-directory
+                                        "auto-browser-web-ai")
+  "The directory to save web AI answers.")
+
 (defcustom auto-browser-web-ai-url ""
   "Web AI URL."
   :type 'string)
@@ -38,41 +43,44 @@
   "The AI response matched URL regexp. python regexp."
   :type 'string)
 
-(defun auto-browser-web-ai-input ()
+(defvar auto-browser-web-ai-default-callback nil)
+
+(defun auto-browser-web-ai-input (&optional prompt callback)
   "Send Input string to Web AI."
   (interactive)
-  (let ((prompt (read-string "Input your prompt: ")))
-    (auto-browser-run-linearly
-     `((auto-browser-get-tab ,auto-browser-web-ai-url)
-       (auto-browser-locate-element auto-browser-web-ai-input-selector)
-       (auto-browser-input ,prompt t "**/completions")
-       (auto-browser-web-ai-render)))))
+  (unless prompt
+    (setq prompt (read-string "Input your prompt: ")))
+  (if callback
+      (setq auto-browser-web-ai-default-callback callback)
+    (setq auto-browser-web-ai-default-callback #'auto-browser-web-ai-save-answer))
+  (auto-browser-run-linearly
+   `((auto-browser-get-tab ,auto-browser-web-ai-url)
+     (auto-browser-locate-element auto-browser-web-ai-input-selector)
+     (auto-browser-input ,prompt t "**/completions")
+     (auto-browser-web-ai-render))))
 ;; (auto-browser-monitor ".fa-paper-plane" #'auto-browser-web-ai-notify)
 
 (defun auto-browser-web-ai-render (traceId data)
-  (with-current-buffer (get-buffer-create "*web-ai*")
+  (funcall auto-browser-web-ai-default-callback data))
+
+(defun auto-browser-web-ai-save-file-name ()
+  (concat (file-name-concat auto-browser-save-directory
+                            (format-time-string "%y%m%d#%H%M%S"))
+          ".md"))
+
+(defun auto-browser-web-ai-save-answer (data)
+  (with-current-buffer (find-file-noselect (auto-browser-web-ai-save-file-name))
     (erase-buffer)
     (insert data)
     (markdown-mode)
+    (save-buffer)
     (switch-to-buffer (current-buffer))))
 
-(defun auto-browser-web-ai-notify (&rest args)
-  (auto-browser-web-ai-show-chat-box))
+(defun auto-browser-web-ai-copy-answer (data)
+  (kill-new data))
 
-(defun auto-browser-web-ai-show-chat-box ()
-  (interactive)
-  (auto-browser-run-linearly
-   `((auto-browser-get-tab ,auto-browser-web-ai-url)
-     (auto-browser-locate-element ".aa-html-content" -1)
-     (auto-browser-get-element "html")
-     (auto-browser-web-ai-render-chat-box))))
-
-(defun auto-browser-web-ai-render-chat-box (trace-id html)
-  (with-current-buffer (get-buffer-create "*web-ai-box*")
-    (erase-buffer)
-    (insert html)
-    (shr-render-region (point-min) (point-max))
-    (pop-to-buffer (current-buffer))))
+(defun auto-browser-web-ai-insert-answer (data)
+  (insert data))
 
 (provide 'web-ai)
 ;;; web-ai.el ends here
