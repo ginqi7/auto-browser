@@ -418,7 +418,7 @@ async def get_emacs_var(var_name: str):
 
 async def init():
     "Init User data."
-    global browser, pages, elements, utils_directory
+    global browser, pages, elements, utils_directory, playwright
     utils_directory = await get_emacs_var("auto-browser-utils-directory")
     playwright = await async_playwright().start()
     browser = await playwright.chromium.connect_over_cdp("http://localhost:9222")

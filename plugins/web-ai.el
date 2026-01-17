@@ -25,7 +25,7 @@
 ;;; Code:
 
 (require 'auto-browser)
-
+;;; Custom Variables:
 (defcustom auto-browser-save-directory (file-name-concat
                                         user-emacs-directory
                                         "auto-browser-web-ai")
@@ -43,9 +43,14 @@
   "The AI response matched URL regexp. python regexp."
   :type 'string)
 
+(defcustom auto-browser-web-ai-session-selector ".session"
+ "The selector of the session element."
+ :type 'string)
+
+;;; Internal Variables:
 (defvar auto-browser-web-ai-default-callback nil)
 
-(defun auto-browser-web-ai-input (&optional prompt callback)
+(defun auto-browser-web-ai-input (&optional prompt callback session)
   "Send Input string to Web AI."
   (interactive)
   (unless prompt
@@ -53,8 +58,12 @@
   (if callback
       (setq auto-browser-web-ai-default-callback callback)
     (setq auto-browser-web-ai-default-callback #'auto-browser-web-ai-save-answer))
+  (unless session
+    (setq session 0))
   (auto-browser-run-linearly
    `((auto-browser-get-tab ,auto-browser-web-ai-url)
+     (auto-browser-locate-element auto-browser-web-ai-session-selector ,session)
+     (auto-browser-click)
      (auto-browser-locate-element auto-browser-web-ai-input-selector)
      (auto-browser-input ,prompt t "**/completions")
      (auto-browser-web-ai-render))))
