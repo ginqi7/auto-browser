@@ -61,7 +61,7 @@
   (unless session
     (setq session 0))
   (auto-browser-run-linearly
-   `((auto-browser-get-tab ,auto-browser-web-ai-url)
+   `((auto-browser-get-tab ,auto-browser-web-ai-url t)
      (auto-browser-locate-element auto-browser-web-ai-session-selector ,session)
      (auto-browser-click)
      (auto-browser-locate-element auto-browser-web-ai-input-selector)
