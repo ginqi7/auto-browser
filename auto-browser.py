@@ -81,6 +81,30 @@ async def get_element(trace_id, property):
     return ""
 
 
+async def locate_elements(trace_id, locator_str):
+    global pages, elements
+    locator = pages[trace_id].locator(locator_str)
+    elements[trace_id] = await locator.all()
+
+
+async def get_elements(trace_id, property):
+    global pages, elements
+    match_elements = elements[trace_id]
+    if match_elements:
+        if property == "html":
+            return [
+                await element.evaluate("el => el.outerHTML")
+                for element in match_elements
+            ]
+        elif property == "href":
+            return [
+                await element.evaluate("el => el.href") for element in match_elements
+            ]
+    else:
+        return ["The elements does not exist."]
+    return ""
+
+
 def handle_arg_types(arg):
     if isinstance(arg, str) and arg.startswith("'"):
         arg = sexpdata.Symbol(arg.partition("'")[2])
@@ -329,12 +353,19 @@ async def on_message(message):
             if len(info[1]) > 4:
                 timeout = info[1][4]
             await locate_element(trace_id, locator, nth, timeout)
+        elif cmd == "locate-elements":
+            locator = info[1][2]
+            await locate_elements(trace_id, locator)
+
         elif cmd == "run-js":
             js = info[1][2]
             await run_js(trace_id, js)
         elif cmd == "get-element":
             property = info[1][2]
             result = await get_element(trace_id, property)
+        elif cmd == "get-elements":
+            property = info[1][2]
+            result = await get_elements(trace_id, property)
         elif cmd == "run-util-js":
             util_name = info[1][2]
             await run_util_js(trace_id, util_name)

@@ -109,6 +109,14 @@
                          nth
                          timeout))
 
+(defun auto-browser-locate-elements (trace-id locator)
+  "Call Auto Browser function."
+  (interactive)
+  (websocket-bridge-call "auto-browser"
+                         "locate-elements"
+                         trace-id
+                         locator))
+
 (defun auto-browser-locate-element-chain (trace-id selectors &optional in-element-p)
   (auto-browser-run-linearly
    `,(append (list
@@ -131,6 +139,14 @@
   (interactive)
   (websocket-bridge-call "auto-browser"
                          "get-element"
+                         trace-id
+                         property))
+
+(defun auto-browser-get-elements (trace-id property)
+  "Call Auto Browser function."
+  (interactive)
+  (websocket-bridge-call "auto-browser"
+                         "get-elements"
                          trace-id
                          property))
 
@@ -180,7 +196,6 @@
                          "key-up"
                          trace-id
                          key))
-
 
 (defun auto-browser-run-linearly (lst &optional trace-id)
   (setq auto-browser--call-chain (append lst auto-browser--call-chain))
