@@ -27,13 +27,10 @@
 (require 'websocket-bridge)
 
 (defvar auto-browser-py-path
-  (concat (file-name-directory (or load-file-name
-                                   (buffer-file-name)))
-          "auto-browser.py"))
+  (concat (file-name-directory (or load-file-name (buffer-file-name))) "auto-browser.py"))
 
 (defvar auto-browser-utils-directory
-  (concat (file-name-directory (or load-file-name (buffer-file-name)))
-          "utils"))
+  (concat (file-name-directory (or load-file-name (buffer-file-name))) "utils"))
 
 (defcustom auto-browser-python (executable-find "python3")
   "The Python interpreter."
@@ -93,29 +90,17 @@
 (defun auto-browser-get-tab (trace-id url &optional match_host)
   "Call Auto Browser function."
   (interactive)
-  (websocket-bridge-call "auto-browser"
-                         "get-page"
-                         trace-id
-                         url
-                         match_host))
+  (websocket-bridge-call "auto-browser" "get-page" trace-id url match_host))
 
 (defun auto-browser-locate-element (trace-id locator &optional nth timeout)
   "Call Auto Browser function."
   (interactive)
-  (websocket-bridge-call "auto-browser"
-                         "locate-element"
-                         trace-id
-                         locator
-                         nth
-                         timeout))
+  (websocket-bridge-call "auto-browser" "locate-element" trace-id locator nth timeout))
 
 (defun auto-browser-locate-elements (trace-id locator)
   "Call Auto Browser function."
   (interactive)
-  (websocket-bridge-call "auto-browser"
-                         "locate-elements"
-                         trace-id
-                         locator))
+  (websocket-bridge-call "auto-browser" "locate-elements" trace-id locator))
 
 (defun auto-browser-locate-element-chain (trace-id selectors &optional in-element-p)
   (auto-browser-run-linearly
@@ -129,73 +114,47 @@
 (defun auto-browser-run-js (trace-id js)
   "Call Auto Browser function."
   (interactive)
-  (websocket-bridge-call "auto-browser"
-                         "run-js"
-                         trace-id
-                         js))
+  (websocket-bridge-call "auto-browser" "run-js" trace-id js))
 
 (defun auto-browser-get-element (trace-id property)
   "Call Auto Browser function."
   (interactive)
-  (websocket-bridge-call "auto-browser"
-                         "get-element"
-                         trace-id
-                         property))
+  (websocket-bridge-call "auto-browser" "get-element" trace-id property))
 
 (defun auto-browser-get-elements (trace-id property)
   "Call Auto Browser function."
   (interactive)
-  (websocket-bridge-call "auto-browser"
-                         "get-elements"
-                         trace-id
-                         property))
+  (websocket-bridge-call "auto-browser" "get-elements" trace-id property))
 
 (defun auto-browser-get-cookies (trace-id)
   "Call Auto Browser function."
   (interactive)
-  (websocket-bridge-call "auto-browser"
-                         "get-cookies"
-                         trace-id))
+  (websocket-bridge-call "auto-browser" "get-cookies" trace-id))
 
 (defun auto-browser-run-util-js (trace-id util-name)
   "Call Auto Browser function."
   (interactive)
-  (websocket-bridge-call "auto-browser"
-                         "run-util-js"
-                         trace-id
-                         util-name))
+  (websocket-bridge-call "auto-browser" "run-util-js" trace-id util-name))
 
 (defun auto-browser-click (trace-id)
   "Call Auto Browser function."
   (interactive)
-  (websocket-bridge-call "auto-browser"
-                         "click"
-                         trace-id))
+  (websocket-bridge-call "auto-browser" "click" trace-id))
 
 (defun auto-browser-scroll (trace-id delta-y delta-x)
   "Call Auto Browser function."
   (interactive)
-  (websocket-bridge-call "auto-browser"
-                         "scroll"
-                         trace-id
-                         delta-y
-                         delta-x))
+  (websocket-bridge-call "auto-browser" "scroll" trace-id delta-y delta-x))
 
 (defun auto-browser-key-down (trace-id key)
   "Call Auto Browser function."
   (interactive)
-  (websocket-bridge-call "auto-browser"
-                         "key-down"
-                         trace-id
-                         key))
+  (websocket-bridge-call "auto-browser" "key-down" trace-id key))
 
 (defun auto-browser-key-up (trace-id key)
   "Call Auto Browser function."
   (interactive)
-  (websocket-bridge-call "auto-browser"
-                         "key-up"
-                         trace-id
-                         key))
+  (websocket-bridge-call "auto-browser" "key-up" trace-id key))
 
 (defun auto-browser-run-linearly (lst &optional trace-id)
   (setq auto-browser--call-chain (append lst auto-browser--call-chain))
@@ -218,54 +177,28 @@
              args)))))
 
 (defun auto-browser-rewrite-image-to-base64 (trace-id)
-  (websocket-bridge-call "auto-browser"
-                         "rewrite-image-to-base64"
-                         trace-id))
+  (websocket-bridge-call "auto-browser" "rewrite-image-to-base64" trace-id))
 
 (defun auto-browser-readability (trace-id html)
-  (websocket-bridge-call "auto-browser"
-                         "readability"
-                         trace-id
-                         html))
+  (websocket-bridge-call "auto-browser" "readability" trace-id html))
 
 (defun auto-browser-input (trace-id input-str &optional enter responseMatch)
-  (websocket-bridge-call "auto-browser"
-                         "input"
-                         trace-id
-                         input-str
-                         enter
-                         responseMatch))
+  (websocket-bridge-call "auto-browser" "input" trace-id input-str enter responseMatch))
 
 (defun auto-browser-monitor (trace-id selector callback)
-  (websocket-bridge-call "auto-browser"
-                         "monitor"
-                         trace-id
-                         selector
-                         callback))
+  (websocket-bridge-call "auto-browser" "monitor" trace-id selector callback))
 
 (defun auto-browser-wait-response (trace-id url-pattern)
-  (websocket-bridge-call "auto-browser"
-                         "wait-response"
-                         trace-id
-                         url-pattern))
+  (websocket-bridge-call "auto-browser" "wait-response" trace-id url-pattern))
 
 (defun auto-browser-stream-response (trace-id url-pattern callback)
-  (websocket-bridge-call "auto-browser"
-                         "stream-response"
-                         trace-id
-                         url-pattern
-                         callback))
+  (websocket-bridge-call "auto-browser" "stream-response" trace-id url-pattern callback))
 
 (defun auto-browser-console (trace-id script)
-  (websocket-bridge-call "auto-browser"
-                         "console"
-                         trace-id
-                         script))
+  (websocket-bridge-call "auto-browser" "console" trace-id script))
 
 (defun auto-browser-refresh (trace-id)
-  (websocket-bridge-call "auto-browser"
-                         "refresh"
-                         trace-id))
+  (websocket-bridge-call "auto-browser" "refresh" trace-id))
 
 (defun auto-browser-render-html (html buffer)
   "Render HTML."
