@@ -35,7 +35,7 @@
   "Web AI URL."
   :type 'string)
 
-(defcustom auto-browser-web-ai-input-selector ".n-input__textarea-el"
+(defcustom auto-browser-web-ai-input-selector "textarea"
   "The selector of the input element."
   :type 'string)
 
@@ -65,31 +65,39 @@
      (auto-browser-locate-element auto-browser-web-ai-session-selector ,session)
      (auto-browser-click)
      (auto-browser-locate-element auto-browser-web-ai-input-selector)
-     (auto-browser-input ,prompt t "**/completions")
-     (auto-browser-web-ai-render))))
-;; (auto-browser-monitor ".fa-paper-plane" #'auto-browser-web-ai-notify)
+     (auto-browser-input ,prompt t)
+     (auto-browser-wait-element-stable ".assistant:last-child .message-content" "auto-browser-web-ai-print"))))
 
-(defun auto-browser-web-ai-render (traceId data)
-  (funcall auto-browser-web-ai-default-callback data))
+;; (auto-browser-monitor ".fa-paper-plane" #'auto-browser-web-ai-notify)
+;; .assistant:last-child
+
+(defun auto-browser-web-ai-print(traceId)
+  (auto-browser-run-linearly
+   `((auto-browser-locate-element ".assistant:last-child .message-content")
+     (auto-browser-get-element "html")
+     (auto-browser-web-ai-render))
+   traceId))
+
+(defun auto-browser-web-ai-render (traceId html)
+  (funcall auto-browser-web-ai-default-callback html))
 
 (defun auto-browser-web-ai-save-file-name ()
   (concat (file-name-concat auto-browser-save-directory
                             (format-time-string "%y%m%d#%H%M%S"))
-          ".md"))
+          ".html"))
 
-(defun auto-browser-web-ai-save-answer (data)
+(defun auto-browser-web-ai-save-answer (html)
   (with-current-buffer (find-file-noselect (auto-browser-web-ai-save-file-name))
     (erase-buffer)
-    (insert data)
-    (markdown-mode)
+    (insert html)
     (save-buffer)
-    (switch-to-buffer (current-buffer))))
+    (shr-render-buffer (current-buffer))))
 
-(defun auto-browser-web-ai-copy-answer (data)
-  (kill-new data))
+(defun auto-browser-web-ai-copy-answer (html)
+  (kill-new (dom-text (auto-browser-dom-parse-html html))))
 
-(defun auto-browser-web-ai-insert-answer (data)
-  (insert data))
+(defun auto-browser-web-ai-insert-answer (html)
+  (insert (dom-text (auto-browser-dom-parse-html html))))
 
 (provide 'web-ai)
 ;;; web-ai.el ends here

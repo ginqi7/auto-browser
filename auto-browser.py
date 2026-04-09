@@ -10,6 +10,7 @@
 # ///
 
 import asyncio
+import html
 import json
 from time import sleep
 from typing import final
@@ -251,37 +252,6 @@ async def stream_response_handle(trace_id, callback, kwargs):
         await eval_in_emacs(callback, args)
 
 
-def stream_response_wait():
-    global request_status
-    for i in range(1500):  # 300 seconds
-        sleep(0.2)
-        if request_status:
-            print(request_status)
-            if all(request_status.values()):
-                return
-
-
-def stream_response(trace_id, url_pattern, callback):
-    global request_status
-    request_status = {}
-    print(url_pattern)
-    pages[trace_id].listen.start(url_pattern, True)
-    pages[trace_id].listen._driver.set_callback(
-        "Network.requestWillBeSent",
-        lambda **kwargs: stream_response_filter(trace_id, url_pattern, kwargs),
-        True,
-    )
-    pages[trace_id].listen._driver.set_callback(
-        "Network.dataReceived",
-        lambda **kwargs: asyncio.run(
-            stream_response_handle(trace_id, callback, kwargs)
-        ),
-        True,
-    )
-    stream_response_wait()
-    pages[trace_id].listen.stop()
-
-
 def wait_response(trace_id, url_pattern):
     print(url_pattern)
     pages[trace_id].listen.start(url_pattern, True)
@@ -292,6 +262,35 @@ def wait_response(trace_id, url_pattern):
     pages[trace_id].listen.stop()
     print(data)
     return [data]
+
+
+async def wait_element_stable(
+    trace_id, selector, callback, stable_ms=5000, timeout=30000
+):
+    page = pages[trace_id]
+    await page.wait_for_selector(selector)
+    old_html = await page.locator(selector).evaluate("el => el.outerHTML")
+    elapsed = 0
+    unchanged_ms = 0
+    while elapsed < timeout:
+        # print(elapsed)
+        # print(unchanged_ms)
+        html = await page.locator(selector).evaluate("el => el.outerHTML")
+        if html == old_html:
+            unchanged_ms += 200
+        else:
+            unchanged_ms = 0
+            old_html = html
+        if unchanged_ms >= stable_ms:
+            break
+        await eval_in_emacs("message", ["Auto-Browser Waiting..."])
+        await asyncio.sleep(0.2)
+        elapsed += 200
+
+    print(f"{selector} is stable.")
+    args = [trace_id]
+    if callback:
+        await eval_in_emacs(callback, args)
 
 
 async def click(trace_id):
@@ -385,10 +384,6 @@ async def on_message(message):
         elif cmd == "wait-response":
             url_pattern = info[1][2]
             result = wait_response(trace_id, url_pattern)
-        elif cmd == "stream-response":
-            url_pattern = info[1][2]
-            callback = info[1][3]
-            result = stream_response(trace_id, url_pattern, callback)
         elif cmd == "click":
             result = await click(trace_id)
         elif cmd == "scroll":
@@ -410,7 +405,10 @@ async def on_message(message):
             result = await monitor_element(trace_id, selector, callback)
         elif cmd == "refresh":
             result = refresh(trace_id)
-
+        elif cmd == "wait-element-stable":
+            selector = info[1][2]
+            callback = info[1][3]
+            asyncio.create_task(wait_element_stable(trace_id, selector, callback))
         else:
             print(f"not fount handler for {cmd}", flush=True)
         args = [trace_id]
