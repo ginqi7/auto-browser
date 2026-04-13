@@ -194,6 +194,9 @@
 (defun auto-browser-wait-element-stable (trace-id selector callback)
   (websocket-bridge-call "auto-browser" "wait-element-stable" trace-id selector callback))
 
+(defun auto-browser-wait-for-element (trace-id selector callback)
+  (websocket-bridge-call "auto-browser" "wait-for-element" trace-id selector callback))
+
 (defun auto-browser-console (trace-id script)
   (websocket-bridge-call "auto-browser" "console" trace-id script))
 

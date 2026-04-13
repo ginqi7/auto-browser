@@ -264,6 +264,14 @@ def wait_response(trace_id, url_pattern):
     return [data]
 
 
+async def wait_for_element(trace_id, selector, callback, timeout=30000):
+    page = pages[trace_id]
+    await page.wait_for_selector(selector)
+    args = [trace_id]
+    if callback:
+        await eval_in_emacs(callback, args)
+
+
 async def wait_element_stable(
     trace_id, selector, callback, stable_ms=5000, timeout=30000
 ):
@@ -409,6 +417,10 @@ async def on_message(message):
             selector = info[1][2]
             callback = info[1][3]
             asyncio.create_task(wait_element_stable(trace_id, selector, callback))
+        elif cmd == "wait-for-element":
+            selector = info[1][2]
+            callback = info[1][3]
+            asyncio.create_task(wait_for_element(trace_id, selector, callback))
         else:
             print(f"not fount handler for {cmd}", flush=True)
         args = [trace_id]

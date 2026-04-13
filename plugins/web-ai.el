@@ -66,7 +66,7 @@
      (auto-browser-click)
      (auto-browser-locate-element auto-browser-web-ai-input-selector)
      (auto-browser-input ,prompt t)
-     (auto-browser-wait-element-stable ".assistant:last-child .message-content" "auto-browser-web-ai-print"))))
+     (auto-browser-wait-for-element ".lucide-rotate-ccw" "auto-browser-web-ai-print"))))
 
 ;; (auto-browser-monitor ".fa-paper-plane" #'auto-browser-web-ai-notify)
 ;; .assistant:last-child
@@ -97,7 +97,7 @@
   (kill-new (dom-text (auto-browser-dom-parse-html html))))
 
 (defun auto-browser-web-ai-insert-answer (html)
-  (insert (dom-text (auto-browser-dom-parse-html html))))
+  (insert (dom-texts (auto-browser-dom-parse-html html))))
 
 (provide 'web-ai)
 ;;; web-ai.el ends here
