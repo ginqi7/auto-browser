@@ -43,7 +43,6 @@
   (interactive)
   (unless str
     (setq str (read-string "Input your say str: ")))
-  (setq ab-say-input-str str)
   (auto-browser-run-linearly
    `((auto-browser-get-tab ,ab-say-url t)
      (auto-browser-locate-element ab-say-input-selector)
