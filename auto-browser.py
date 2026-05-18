@@ -142,7 +142,8 @@ async def run_util_js(tab_id, util_name):
     global pages, utils_directory
     full_path = os.path.join(utils_directory, util_name)
     content = read_file_contents(full_path)
-    await pages[tab_id].evaluate(f"() => { {content} }")
+    # print(content)
+    await pages[tab_id].evaluate(content)
 
 
 async def rewrite_image_to_base64(tab_id):
@@ -252,16 +253,23 @@ async def stream_response_handle(trace_id, callback, kwargs):
         await eval_in_emacs(callback, args)
 
 
-def wait_response(trace_id, url_pattern):
-    print(url_pattern)
-    pages[trace_id].listen.start(url_pattern, True)
-    res = pages[trace_id].listen.wait()
-    data = res.response.body
-    if type(data) is bytes:
-        data = data.decode("utf-8")
-    pages[trace_id].listen.stop()
-    print(data)
-    return [data]
+def wait_response(trace_id, url_pattern, callback):
+    async def handle_response(response):
+        if re.match(rf"{url_pattern}", response.url):
+            try:
+                print(f"[{trace_id}] response URL: {response.url}")
+                data = await response.body()
+                if isinstance(data, bytes):
+                    data = fix_encoding(data.decode())
+                print(f"[{trace_id}] response Data: {data}")
+                if callback:
+                    await eval_in_emacs(callback, [data])
+                pages[trace_id].remove_listener("response", handle_response)
+            except Exception as e:
+                print(f"Error: {e}")
+
+    pages[trace_id].on("response", handle_response)
+    return []
 
 
 async def wait_for_element(trace_id, selector, callback, timeout=30000):
@@ -391,7 +399,8 @@ async def on_message(message):
             result = await input(trace_id, input_str, enter, response_match)
         elif cmd == "wait-response":
             url_pattern = info[1][2]
-            result = wait_response(trace_id, url_pattern)
+            callback = info[1][3]
+            result = wait_response(trace_id, url_pattern, callback)
         elif cmd == "click":
             result = await click(trace_id)
         elif cmd == "scroll":

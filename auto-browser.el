@@ -188,8 +188,8 @@
 (defun auto-browser-monitor (trace-id selector callback)
   (websocket-bridge-call "auto-browser" "monitor" trace-id selector callback))
 
-(defun auto-browser-wait-response (trace-id url-pattern)
-  (websocket-bridge-call "auto-browser" "wait-response" trace-id url-pattern))
+(defun auto-browser-wait-response (trace-id url-pattern callback)
+  (websocket-bridge-call "auto-browser" "wait-response" trace-id url-pattern callback))
 
 (defun auto-browser-wait-element-stable (trace-id selector callback)
   (websocket-bridge-call "auto-browser" "wait-element-stable" trace-id selector callback))

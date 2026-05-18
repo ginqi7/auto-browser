@@ -55,28 +55,18 @@
   (interactive)
   (unless prompt
     (setq prompt (read-string "Input your prompt: ")))
-  (if callback
-      (setq auto-browser-web-ai-default-callback callback)
-    (setq auto-browser-web-ai-default-callback #'auto-browser-web-ai-save-answer))
+  (unless callback
+    (setq callback #'auto-browser-web-ai-save-answer))
   (unless session
     (setq session 0))
   (auto-browser-run-linearly
    `((auto-browser-get-tab ,auto-browser-web-ai-url t)
      (auto-browser-locate-element auto-browser-web-ai-session-selector ,session)
      (auto-browser-click)
-     (auto-browser-locate-element auto-browser-web-ai-input-selector)
-     (auto-browser-input ,prompt t)
-     (auto-browser-wait-for-element ".lucide-rotate-ccw" "auto-browser-web-ai-print"))))
-
-;; (auto-browser-monitor ".fa-paper-plane" #'auto-browser-web-ai-notify)
-;; .assistant:last-child
-
-(defun auto-browser-web-ai-print(traceId)
-  (auto-browser-run-linearly
-   `((auto-browser-locate-element ".assistant:last-child .message-content")
-     (auto-browser-get-element "html")
-     (auto-browser-web-ai-render))
-   traceId))
+     (auto-browser-run-util-js "scroll_to_bottom.js")
+     (auto-browser-wait-response ".*completions" ,(symbol-name callback))
+     (auto-browser-locate-element ".n-input__textarea-el")
+     (auto-browser-input ,prompt t))))
 
 (defun auto-browser-web-ai-render (traceId html)
   (funcall auto-browser-web-ai-default-callback html))
@@ -84,20 +74,42 @@
 (defun auto-browser-web-ai-save-file-name ()
   (concat (file-name-concat auto-browser-save-directory
                             (format-time-string "%y%m%d#%H%M%S"))
-          ".html"))
+          ".md"))
 
-(defun auto-browser-web-ai-save-answer (html)
+(defun auto-browser-web-ai-data-parse (data)
+  (let* ((prefix "data: ")
+         (lines (split-string data "\n" t))
+         (json-str (nth (- (length lines) 2) lines))
+         (json-str (if (string-prefix-p prefix json-str)
+                       (substring json-str (length prefix))
+                     json-str))
+         (json-str (string-trim json-str))
+         (json-str (if (and (string-prefix-p "\"" json-str)
+                            (string-suffix-p "\"" json-str))
+                       (substring json-str 1 -1)
+                     json-str))
+         (json (json-parse-string json-str))
+         (text (gethash "aiText" (gethash "data" json))))
+    text))
+
+(defun auto-browser-web-ai-save-answer (data)
   (with-current-buffer (find-file-noselect (auto-browser-web-ai-save-file-name))
     (erase-buffer)
-    (insert html)
+    (insert (auto-browser-web-ai-data-parse data))
     (save-buffer)
-    (shr-render-buffer (current-buffer))))
+    (switch-to-buffer (current-buffer))))
 
-(defun auto-browser-web-ai-copy-answer (html)
-  (kill-new (dom-text (auto-browser-dom-parse-html html))))
+  ;; (with-current-buffer (find-file-noselect (auto-browser-web-ai-save-file-name))
+  ;;   (erase-buffer)
+  ;;   (insert html)
+  ;;   (save-buffer)
+  ;;   (shr-render-buffer (current-buffer)))
 
-(defun auto-browser-web-ai-insert-answer (html)
-  (insert (dom-texts (auto-browser-dom-parse-html html))))
+(defun auto-browser-web-ai-copy-answer (data)
+  (kill-new (auto-browser-web-ai-data-parse data)))
+
+(defun auto-browser-web-ai-insert-answer (data)
+  (insert (auto-browser-web-ai-data-parse data)))
 
 (provide 'web-ai)
 ;;; web-ai.el ends here
