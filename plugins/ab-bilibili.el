@@ -45,7 +45,7 @@
   "SQL template for inserting new Bilibili video records into the database."
   :type 'string)
 
-(defcustom ab-bilibili-select-sql "SELECT url, author, title, date FROM bilibili_videos %s;"
+(defcustom ab-bilibili-select-sql "SELECT url, author, title, date FROM bilibili_videos %s order by date desc;"
   "SQL template for selecting Bilibili video records from the database."
   :type 'string)
 
@@ -104,11 +104,11 @@ to look up values and WIDTH-RATIO scales column width relative to window."
 
 (defun ab-bilibili--item-parse (item)
   "Parse a Bilibili item string and return a hash table containing its metadata."
-  (let ((table (make-hash-table))
-        (author (string-trim (dom-text(auto-browser-dom-query-selector-first (auto-browser-dom-parse-html item) ".bili-dyn-title__text"))))
-        (title (string-trim (dom-text(auto-browser-dom-query-selector-first (auto-browser-dom-parse-html item) ".bili-dyn-card-video__title"))))
-        (url (concat "https:" (dom-attr (auto-browser-dom-query-selector-first (auto-browser-dom-parse-html item) ".bili-dyn-card-video") 'href)))
-        (date (ab-bilibili--date-parse (string-trim (dom-text(auto-browser-dom-query-selector-first (auto-browser-dom-parse-html item) ".bili-dyn-time"))))))
+  (when-let* ((table (make-hash-table))
+              (author (string-trim (dom-text(auto-browser-dom-query-selector-first (auto-browser-dom-parse-html item) ".bili-dyn-title__text"))))
+              (title (string-trim (dom-text(auto-browser-dom-query-selector-first (auto-browser-dom-parse-html item) ".bili-dyn-card-video__title"))))
+              (url (concat "https:" (dom-attr (auto-browser-dom-query-selector-first (auto-browser-dom-parse-html item) ".bili-dyn-card-video") 'href)))
+              (date (ab-bilibili--date-parse (string-trim (dom-text(auto-browser-dom-query-selector-first (auto-browser-dom-parse-html item) ".bili-dyn-time"))))))
     (puthash 'author author table)
     (puthash 'title title table)
     (puthash 'url url table)
@@ -123,7 +123,7 @@ LST is a list of HTML strings representing video items.
 
 Each video is parsed to extract author, title, and URL, then displayed
 using `auto-browser-ctable-render'. Clicking a row opens the video URL."
-  (funcall ab-bilibili--default-handle (mapcar #'ab-bilibili--item-parse lst)))
+  (funcall ab-bilibili--default-handle (remove nil (mapcar #'ab-bilibili--item-parse lst))))
 
 ;;; Interactive Functions
 (defun ab-bilibili-db-check-videos ()
@@ -158,6 +158,8 @@ using `auto-browser-ctable-render'. Clicking a row opens the video URL."
     (setq ab-bilibili--default-handle (or handle #'ab-bilibili--ctable-render))
     (auto-browser-run-linearly
      `((auto-browser-get-tab ,url t)
+       (auto-browser-refresh)
+       (auto-browser-wait-for-timeout 500)
        (auto-browser-locate-elements ,selector)
        (auto-browser-get-elements "html")
        (ab-bilibili--htmls-parse)))))

@@ -330,9 +330,9 @@ async def key_up(trace_id, key):
     await pages[trace_id].keyboard.up(key)
 
 
-def refresh(trace_id):
+async def refresh(trace_id):
     global pages, elements
-    pages[trace_id].reload()
+    await pages[trace_id].reload()
 
 
 async def console(trace_id, script):
@@ -421,7 +421,7 @@ async def on_message(message):
             callback = info[1][3]
             result = await monitor_element(trace_id, selector, callback)
         elif cmd == "refresh":
-            result = refresh(trace_id)
+            result = await refresh(trace_id)
         elif cmd == "wait-element-stable":
             selector = info[1][2]
             callback = info[1][3]
@@ -430,6 +430,10 @@ async def on_message(message):
             selector = info[1][2]
             callback = info[1][3]
             asyncio.create_task(wait_for_element(trace_id, selector, callback))
+        elif cmd == "wait-for-timeout":
+            timeout = info[1][2]
+            await pages[trace_id].wait_for_timeout(timeout)
+            # asyncio.create_task(wait_for_timeout(trace_id, timeout))
         else:
             print(f"not fount handler for {cmd}", flush=True)
         args = [trace_id]
