@@ -1,4 +1,4 @@
-;;; bilibili.el ---                                  -*- lexical-binding: t; -*-
+;;; ab-bilibili.el ---                                  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026  Qiqi Jin
 
@@ -172,5 +172,5 @@ using `auto-browser-ctable-render'. Clicking a row opens the video URL."
     (auto-browser-db-execute (format ab-bilibili-update-sql url))
     (browse-url url)))
 
-(provide 'bilibili)
-;;; bilibili.el ends here
+(provide 'ab-bilibili)
+;;; ab-bilibili.el ends here
