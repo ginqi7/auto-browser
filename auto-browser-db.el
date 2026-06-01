@@ -25,13 +25,19 @@
 ;;; Code:
 
 (defcustom auto-browser-db (file-name-concat user-emacs-directory "auto-browser.sqlite")
-  "")
+  "Path to the SQLite database file used for storing auto-browser data.")
 
 (defun auto-browser-db-execute (sql)
-  (sqlite-execute (sqlite-open auto-browser-db) sql))
+  "Execute the given SQL statement on the database specified by auto-browser-db."
+  (let ((db (sqlite-open auto-browser-db)))
+    (sqlite-execute db sql)
+    (sqlite-close db)))
 
 (defun auto-browser-db-select (sql)
-  (sqlite-select (sqlite-open auto-browser-db) sql))
+  "Execute the given SQL select statement on the database specified by auto-browser-db and return the resulting records."
+  (let ((db (sqlite-open auto-browser-db)))
+    (sqlite-select db sql)
+    (sqlite-close db)))
 
 (provide 'auto-browser-db)
 ;;; auto-browser-db.el ends here
