@@ -64,6 +64,9 @@ to look up values and WIDTH-RATIO scales column width relative to window."
 (defvar ab-bilibili--default-handle #'ab-bilibili--ctable-render
   "Default handler function for rendering Bilibili video data.")
 
+(defvar-local ab-bilibili--refresh-function nil
+  "Buffer-local variable that stores the function used to refresh Bilibili-related data or content in the current buffer.")
+
 ;;; Internal Functions
 
 (defun ab-bilibili--ctable-render (items)
@@ -71,7 +74,7 @@ to look up values and WIDTH-RATIO scales column width relative to window."
   (auto-browser-ctable-render :buffer-name "*auto-browser-bilibili*"
                               :headers ab-bilibili-ctable-header
                               :table items
-                              :actions #'ab-bilibili-ctable-open))
+                              :actions #'ab-bilibili-ctable-actions))
 
 (defun ab-bilibili--db-insert-videos (items)
   "Insert a list of Bilibili video items into the database."
@@ -171,8 +174,24 @@ using `auto-browser-ctable-render'. Clicking a row opens the video URL."
          (row (ctbl:cp-get-selected-data-row cp))
          (item (car (last row)))
          (url (gethash 'url item)))
-    (auto-browser-db-execute (format ab-bilibili-update-sql url))
+    (ab-bilibili-ctable-mark-read)
     (browse-url url)))
+
+(defun ab-bilibili-ctable-mark-read ()
+  "Mark the currently selected Bilibili entry in the ctable as read by extracting the URL from the selected row and executing a corresponding SQL update statement in the database."
+  (interactive)
+  (let* ((cp (ctbl:cp-get-component))
+         (row (ctbl:cp-get-selected-data-row cp))
+         (item (car (last row)))
+         (url (gethash 'url item)))
+    (when (= 1 (auto-browser-db-execute (format ab-bilibili-update-sql url)))
+      (ab-bilibili-db-videos))))
+
+(transient-define-prefix ab-bilibili-ctable-actions ()
+  "Actions for Auto Browser Bilibili Ctable."
+  ["Auto Browser Bilibili"
+   ("o" "Open in Browser" ab-bilibili-ctable-open)
+   ("m" "Mark as Read" ab-bilibili-ctable-mark-read)])
 
 (provide 'ab-bilibili)
 ;;; ab-bilibili.el ends here

@@ -29,15 +29,17 @@
 
 (defun auto-browser-db-execute (sql)
   "Execute the given SQL statement on the database specified by auto-browser-db."
-  (let ((db (sqlite-open auto-browser-db)))
-    (sqlite-execute db sql)
-    (sqlite-close db)))
+  (let* ((db (sqlite-open auto-browser-db))
+         (data (sqlite-execute db sql)))
+    (sqlite-close db)
+    data))
 
 (defun auto-browser-db-select (sql)
   "Execute the given SQL select statement on the database specified by auto-browser-db and return the resulting records."
-  (let ((db (sqlite-open auto-browser-db)))
-    (sqlite-select db sql)
-    (sqlite-close db)))
+  (let* ((db (sqlite-open auto-browser-db))
+         (data (sqlite-select db sql)))
+    (sqlite-close db)
+    data))
 
 (provide 'auto-browser-db)
 ;;; auto-browser-db.el ends here
