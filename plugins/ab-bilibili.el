@@ -33,6 +33,10 @@
   "Bilibili dynamic page URL."
   :type 'string)
 
+(defcustom ab-bilibili-play-command (executable-find "mpv")
+  "The executable path or command used to play Bilibili videos."
+  :type 'string)
+
 (defcustom ab-bilibili-only-show-unread t
   "Non-nil means display only unread Bilibili videos."
   :type 'bool)
@@ -88,8 +92,8 @@ to look up values and WIDTH-RATIO scales column width relative to window."
   "Insert a single Bilibili video item into the database."
   (auto-browser-db-execute (format ab-bilibili-insert-sql
                                    (gethash 'url table)
-                                   (gethash 'author table)
-                                   (gethash 'title table)
+                                   (string-replace "'" "" (gethash 'author table))
+                                   (string-replace "'" ""(gethash 'title table))
                                    (gethash 'date table))))
 
 (defun ab-bilibili--date-compute (date-diff)
@@ -167,31 +171,49 @@ using `auto-browser-ctable-render'. Clicking a row opens the video URL."
        (auto-browser-get-elements "html")
        (ab-bilibili--htmls-parse)))))
 
-(defun ab-bilibili-ctable-open ()
-  "Open the selected Bilibili video URL and update its status in the database."
-  (interactive)
-  (let* ((cp (ctbl:cp-get-component))
-         (row (ctbl:cp-get-selected-data-row cp))
-         (item (car (last row)))
-         (url (gethash 'url item)))
-    (ab-bilibili-ctable-mark-read)
-    (browse-url url)))
+(defun ab-bilibili--ctable-get-url ()
+  "Retrieve the URL of the currently selected Bilibili entry from the ctable component by extracting it from the data hash table in the selected row."
+  (when-let* ((cp (ctbl:cp-get-component))
+              (row (ctbl:cp-get-selected-data-row cp))
+              (item (car (last row)))
+              (url (gethash 'url item)))
+    url))
 
-(defun ab-bilibili-ctable-mark-read ()
-  "Mark the currently selected Bilibili entry in the ctable as read by extracting the URL from the selected row and executing a corresponding SQL update statement in the database."
+(defun ab-bilibili-ctable-mark-read (&optional url)
+  "Mark the selected Bilibili video as read in the database and refresh the displayed video list."
   (interactive)
-  (let* ((cp (ctbl:cp-get-component))
-         (row (ctbl:cp-get-selected-data-row cp))
-         (item (car (last row)))
-         (url (gethash 'url item)))
-    (when (= 1 (auto-browser-db-execute (format ab-bilibili-update-sql url)))
-      (ab-bilibili-db-videos))))
+  (setq url (or url (ab-bilibili--ctable-get-url)))
+  (when (= 1 (auto-browser-db-execute (format ab-bilibili-update-sql url)))
+    (ab-bilibili-db-videos)))
+
+(defun ab-bilibili-ctable-open (&optional url)
+  "Open the selected Bilibili video URL in a web browser and mark it as read in the database."
+  (interactive)
+  (setq url (or url (ab-bilibili--ctable-get-url)))
+  (browse-url url)
+  (ab-bilibili-ctable-mark-read url))
+
+(defun ab-bilibili-ctable-play (&optional url)
+  "Play the selected Bilibili video using the configured external player and mark it as read in the database."
+  (interactive)
+  (setq url (or url (ab-bilibili--ctable-get-url)))
+  (start-process "*ab-bilibili-play*" nil ab-bilibili-play-command url)
+  (ab-bilibili-ctable-mark-read url))
+
+(defun ab-bilibili-ctable-sort ()
+  "Prompt for a column from the Bilibili table header and sort the list based on the selection."
+  (interactive)
+  (let ((sort-key (completing-read "Sort by: " ab-bilibili-ctable-header)))
+    (ctbl:cmodel-sort-action (ctbl:cp-get-component)
+                             (cl-position-if (lambda (key) (equal key (intern sort-key))) (mapcar #'car ab-bilibili-ctable-header)))))
 
 (transient-define-prefix ab-bilibili-ctable-actions ()
   "Actions for Auto Browser Bilibili Ctable."
   ["Auto Browser Bilibili"
    ("o" "Open in Browser" ab-bilibili-ctable-open)
-   ("m" "Mark as Read" ab-bilibili-ctable-mark-read)])
+   ("p" "Play the video" ab-bilibili-ctable-play)
+   ("m" "Mark as Read" ab-bilibili-ctable-mark-read)
+   ("s" "Sort Rows" ab-bilibili-ctable-sort)])
 
 (provide 'ab-bilibili)
 ;;; ab-bilibili.el ends here

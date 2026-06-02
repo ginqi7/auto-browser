@@ -42,6 +42,7 @@ ACTIONS is an optional function called when a table row is clicked."
              (lambda (header)
                (make-ctbl:cmodel :title (format "%s" (car header))
                                  :align 'left
+                                 :sorter 'ctbl:sort-string-lessp
                                  :max-width (* (window-width) (cdr header))))
              headers))
            (data (mapcar

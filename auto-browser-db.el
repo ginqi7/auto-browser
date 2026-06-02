@@ -27,10 +27,15 @@
 (defcustom auto-browser-db (file-name-concat user-emacs-directory "auto-browser.sqlite")
   "Path to the SQLite database file used for storing auto-browser data.")
 
+(defcustom auto-browser-db-log-sql-p nil
+  "Non-nil means log the SQL statements executed on the database.")
+
 (defun auto-browser-db-execute (sql)
   "Execute the given SQL statement on the database specified by auto-browser-db."
   (let* ((db (sqlite-open auto-browser-db))
          (data (sqlite-execute db sql)))
+    (when auto-browser-db-log-sql-p
+      (print sql))
     (sqlite-close db)
     data))
 
@@ -38,6 +43,8 @@
   "Execute the given SQL select statement on the database specified by auto-browser-db and return the resulting records."
   (let* ((db (sqlite-open auto-browser-db))
          (data (sqlite-select db sql)))
+    (when auto-browser-db-log-sql-p
+      (print sql))
     (sqlite-close db)
     data))
 
