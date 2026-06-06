@@ -26,16 +26,24 @@
 
 (require 'ctable)
 
-(cl-defun auto-browser-ctable-render (&key buffer-name headers table actions)
-  "Render a clickable table in BUFFER-NAME using ctable.
+(defvar-local auto-browser-ctable--last-sort-idx 0
+  "Buffer-local variable storing the index of the last sorted column.")
 
-HEADERS is a list of (KEY . WIDTH-RATIO) pairs where KEY is used
-to look up values in each row hash-table, and WIDTH-RATIO scales
-column width relative to `window-width'.
+(cl-defun auto-browser-ctable-sort (&key sort-idx)
+  "Sort the current ctable model by the specified column index and record that index as the last sort."
+  (setq-local auto-browser-ctable--last-sort-idx sort-idx)
+  (ctbl:cmodel-sort-action (ctbl:cp-get-component) auto-browser-ctable--last-sort-idx))
 
-TABLE is a list of hash-tables, each representing a row.
+(cl-defun auto-browser-ctable-render (&key buffer-name headers table actions sort-idx cell)
+  "Render a clickable ctable in BUFFER-NAME from TABLE using HEADERS.
 
-ACTIONS is an optional function called when a table row is clicked."
+HEADERS is a list of (KEY . WIDTH-RATIO) pairs used to extract values from each row hash table and to determine relative column widths.
+
+TABLE is a list of hash tables, each representing one row.
+
+ACTIONS, when non-nil, is called when a row is clicked.
+
+Optional SORT-IDX selects the initial sort column, and CELL sets the initial selected cell."
   (with-current-buffer (get-buffer-create buffer-name)
     (let* ((column-model
             (mapcar
@@ -56,9 +64,11 @@ ACTIONS is an optional function called when a table row is clicked."
       (erase-buffer)
       (switch-to-buffer (current-buffer))
       (setq component (ctbl:create-table-component-region :model model))
-      (goto-line 3)
+      (ctbl:cmodel-sort-action component (or sort-idx auto-browser-ctable--last-sort-idx))
       (when actions
-        (ctbl:cp-add-click-hook component (lambda () (funcall actions)))))))
+        (ctbl:cp-add-click-hook component (lambda () (funcall actions))))
+      (goto-char 0)
+      (ctbl:navi-goto-cell (or cell '(0 . 0))))))
 
 (provide 'auto-browser-ctable)
 ;;; auto-browser-ctable.el ends here

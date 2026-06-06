@@ -68,24 +68,23 @@ to look up values and WIDTH-RATIO scales column width relative to window."
 (defvar ab-bilibili--default-handle #'ab-bilibili--ctable-render
   "Default handler function for rendering Bilibili video data.")
 
-(defvar-local ab-bilibili--sort-column nil
-  "The column names used for sorting in the current buffer, stored as a buffer-local variable.")
-
 ;;; Internal Functions
 
-(defun ab-bilibili--ctable-sort ()
-  ""
-  (when ab-bilibili--sort-column
-    (ctbl:cmodel-sort-action (ctbl:cp-get-component)
-                             (cl-position-if (lambda (key) (equal key (intern ab-bilibili--sort-column))) (mapcar #'car ab-bilibili-ctable-header)))))
+(defun ab-bilibili--ctable-sort (column)
+  "Sort the Bilibili ctable by the specified column name."
+  (auto-browser-ctable-sort
+   :sort-idx
+   (cl-position-if #'(lambda (key) (equal key (intern column)))
+                   (mapcar #'car ab-bilibili-ctable-header))))
 
 (defun ab-bilibili--ctable-render (items)
-  "Render a list of Bilibili items in a ctable buffer with defined headers and actions."
-  (auto-browser-ctable-render :buffer-name "*auto-browser-bilibili*"
-                              :headers ab-bilibili-ctable-header
-                              :table items
-                              :actions #'ab-bilibili-ctable-actions)
-  (ab-bilibili--ctable-sort))
+  "Render Bilibili items in the auto-browser ctable buffer."
+  (with-current-buffer (get-buffer-create "*auto-browser-bilibili*")
+    (auto-browser-ctable-render :buffer-name "*auto-browser-bilibili*"
+                                :headers ab-bilibili-ctable-header
+                                :table items
+                                :actions #'ab-bilibili-ctable-actions
+                                :cell (ctbl:cp-get-selected (ctbl:cp-get-component)))))
 
 (defun ab-bilibili--db-insert-videos (items)
   "Insert a list of Bilibili video items into the database."
@@ -210,9 +209,7 @@ using `auto-browser-ctable-render'. Clicking a row opens the video URL."
 (defun ab-bilibili-ctable-sort ()
   "Prompt for a column from the Bilibili table header and sort the list based on the selection."
   (interactive)
-  (let ((sort-key (completing-read "Sort by: " ab-bilibili-ctable-header)))
-    (setq-local ab-bilibili--sort-column sort-key)
-    (ab-bilibili--ctable-sort)))
+  (ab-bilibili--ctable-sort (completing-read "Sort by: " ab-bilibili-ctable-header)))
 
 (transient-define-prefix ab-bilibili-ctable-actions ()
   "Actions for Auto Browser Bilibili Ctable."
