@@ -84,7 +84,7 @@ to look up values and WIDTH-RATIO scales column width relative to window."
                                 :headers ab-bilibili-ctable-header
                                 :table items
                                 :actions #'ab-bilibili-ctable-actions
-                                :cell (if (local-variable-p 'ctbl:component (current-buffer))
+                                :cell (if (get-text-property (point) 'ctbl:component)
                                           (ctbl:cp-get-selected (ctbl:cp-get-component))
                                         '(0 . 0)))))
 
