@@ -84,7 +84,9 @@ to look up values and WIDTH-RATIO scales column width relative to window."
                                 :headers ab-bilibili-ctable-header
                                 :table items
                                 :actions #'ab-bilibili-ctable-actions
-                                :cell (ctbl:cp-get-selected (ctbl:cp-get-component)))))
+                                :cell (if (local-variable-p 'ctbl:component (current-buffer))
+                                          (ctbl:cp-get-selected (ctbl:cp-get-component))
+                                        '(0 . 0)))))
 
 (defun ab-bilibili--db-insert-videos (items)
   "Insert a list of Bilibili video items into the database."
