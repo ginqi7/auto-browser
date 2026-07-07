@@ -3,6 +3,7 @@
 ;; Copyright (C) 2024  Qiqi Jin
 
 ;; Author: Qiqi Jin <ginqi7@gmail.com>
+;; Package-Requires: ((websocket-bridge))
 ;; Keywords:
 
 ;; This program is free software; you can redistribute it and/or modify
