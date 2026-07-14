@@ -23,6 +23,7 @@
 ;;
 
 (require 'auto-browser)
+(require 'auto-browser-dom)
 
 ;;; Code:
 
