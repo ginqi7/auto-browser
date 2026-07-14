@@ -1,4 +1,4 @@
-;;; console.el ---                                   -*- lexical-binding: t; -*-
+;;; ab-console.el ---                                   -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2025  Qiqi Jin
 
@@ -97,5 +97,5 @@
      (auto-browser-console ,script)
      (,result-handle))))
 
-(provide 'console)
-;;; console.el ends here
+(provide 'ab-console)
+;;; ab-console.el ends here

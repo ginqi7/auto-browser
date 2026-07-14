@@ -1,4 +1,4 @@
-;;; miniflux.el --- Miniflux for Auto Browser.               -*- lexical-binding: t; -*-
+;;; ab-miniflux.el --- Miniflux for Auto Browser.               -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024  Qiqi Jin
 
@@ -70,13 +70,12 @@
        (auto-browser-get-element "html")
        (auto-browser-miniflux-render-article)))))
 
-
 (defun auto-browser-miniflux-render-article (trace-id html)
   "Render article HTML."
   (let ((shr-external-rendering-functions auto-browser-miniflux-rendering-functions))
     (auto-browser-render-html html "*miniflux-article*")
     (with-current-buffer "*miniflux-article*"
-      (miniflux-article-mode 1))))
+      (ab-miniflux-article-mode 1))))
 
 (defun auto-browser-miniflux-render-unread (trace-id html)
   "Render Unread List by tabulated-list."
@@ -91,10 +90,10 @@
                            (plist-get item :author)
                            (plist-get item :time))))
                   (auto-browser-miniflux-html-parse html)))
-    (miniflux-unread-mode)
+    (ab-miniflux-unread-mode)
     (goto-char (point-min))))
 
-(define-derived-mode miniflux-unread-mode tabulated-list-mode "Contexts Menu"
+(define-derived-mode ab-miniflux-unread-mode tabulated-list-mode "Contexts Menu"
   "Major mode for handling a list of miniflux unread."
   (setq tabulated-list-format [("Title" 50 t)
                                ("Author" 20 t :right-align t)
@@ -131,9 +130,9 @@
                                             :url url)))))
     data))
 
-(define-minor-mode miniflux-article-mode
+(define-minor-mode ab-miniflux-article-mode
   "A minor mode in miniflux article buffer.")
 
-(provide 'miniflux)
+(provide 'ab-miniflux)
 
-;;; mini flux.el ends here
+;;; ab-miniflux.el ends here

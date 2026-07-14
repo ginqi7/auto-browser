@@ -1,4 +1,4 @@
-;;; telegram.el ---                                  -*- lexical-binding: t; -*-
+;;; ab-telegram.el ---                                  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2025  Qiqi Jin
 
@@ -80,7 +80,7 @@
                            (plist-get item :last-message)
                            (plist-get item :last-message-time))))
                   (auto-browser-telegram-parse-dialogue-list-html html)))
-    (telegram-dialogues-mode)
+    (ab-telegram-dialogues-mode)
     (goto-char (point-min))))
 
 (defun auto-browser-telegram-open-dialogue ()
@@ -101,8 +101,6 @@
        (auto-browser-get-element "html")
        (auto-browser-telegram-render-dialogue-messages ,(aref entry 0))))))
 
-
-
 (defun auto-browser-telegram-render-dialogue-messages (trace-id name html)
   "Render messages in a dialogue."
   (with-current-buffer (get-buffer-create (format "*%s*" name))
@@ -120,7 +118,6 @@
         (auto-browser-telegram-parse-message-date-group message-date-group))
       (auto-browser--run-linearly trace-id))))
 
-
 (defun auto-browser-telegram-parse-message-date-group (dom)
   "Parese message data group dom."
   (let ((message-groups (auto-browser-dom-query-selector-all
@@ -134,8 +131,6 @@
         (auto-browser-telegram-parse-message-group message-group))
       ;; If there are no message groups, just search messages.
       (auto-browser-telegram-parse-message-group dom))))
-
-
 
 (defun auto-browser-telegram-parse-message-group (dom)
   "Find messages in message-group dom."
@@ -155,7 +150,6 @@
       (when webpage-content-dom
         (shr-insert-document webpage-content-dom)))))
 
-
 (defun auto-browser-telegram-send-message (&optional msg)
   "Send Message"
   (interactive)
@@ -166,7 +160,7 @@
        (auto-browser-locate-element ".input-scroller-content")
        (auto-browser-input ,(format "%s\n" msg)))))
 
-(define-derived-mode telegram-dialogues-mode tabulated-list-mode "Telegram Dialogues"
+(define-derived-mode ab-telegram-dialogues-mode tabulated-list-mode "Telegram Dialogues"
   "Major mode for handling a list of Telegram Dialogue."
   (setq tabulated-list-format [("Title" 30 t)
                                ("Last Message" 60 t)
@@ -178,5 +172,5 @@
     (define-key map (kbd "RET") 'auto-browser-telegram-open-dialogue)
     (use-local-map map)))
 
-(provide 'telegram)
-;;; telegram.el ends here
+(provide 'ab-telegram)
+;;; ab-telegram.el ends here

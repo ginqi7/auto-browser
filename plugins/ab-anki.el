@@ -1,4 +1,4 @@
-;;; anki.el --- Anki for Auto-Browser                -*- lexical-binding: t; -*-
+;;; ab-anki.el --- Anki for Auto-Browser                -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024  Qiqi Jin
 
@@ -98,7 +98,6 @@
        (auto-browser-anki-show))
      trace-id)))
 
-
 (defun auto-browser-anki-decks (&optional trace-id)
   "Show anki study page."
   (interactive)
@@ -134,7 +133,6 @@
        (auto-browser-click)
        (auto-browser-anki-study)))))
 
-
 (defun auto-browser-anki-decks--to-entries (html)
   (let (key name due new)
     (mapcar
@@ -158,7 +156,6 @@
      (auto-browser-dom-query-selector-all
       (auto-browser-dom-parse-html html) "div .light-bottom-border"))))
 
-
 (defun auto-browser-add-count-info (html)
   (format "<h1>
              <span style=\"color: #00f;\">%s</span>
@@ -179,7 +176,6 @@
                               auto-browser-anki--buffer-name)
     (anki-mode)
     (auto-browser--run-linearly trace-id)))
-
 
 (defun auto-browser-anki-play-audio (&optional trace-id)
   "Play Audio."
@@ -271,6 +267,5 @@
       (auto-browser-anki-show-answer)
     (auto-browser-anki-good)))
 
-
-(provide 'anki)
-;;; anki.el ends here
+(provide 'ab-anki)
+;;; ab-anki.el ends here

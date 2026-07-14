@@ -1,4 +1,4 @@
-;;; web-ai.el --- Web AI for Auto Browser.           -*- lexical-binding: t; -*-
+;;; ab-chat-ai.el --- Chat AI for Auto Browser.           -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024  Qiqi Jin
 
@@ -28,55 +28,55 @@
 ;;; Custom Variables:
 (defcustom auto-browser-save-directory (file-name-concat
                                         user-emacs-directory
-                                        "auto-browser-web-ai")
+                                        "auto-browser-chat-ai")
   "The directory to save web AI answers.")
 
-(defcustom auto-browser-web-ai-url ""
+(defcustom auto-browser-chat-ai-url ""
   "Web AI URL."
   :type 'string)
 
-(defcustom auto-browser-web-ai-input-selector "textarea"
+(defcustom auto-browser-chat-ai-input-selector "textarea"
   "The selector of the input element."
   :type 'string)
 
-(defcustom auto-browser-web-ai-response-regexp "(\\d+)?$"
+(defcustom auto-browser-chat-ai-response-regexp "(\\d+)?$"
   "The AI response matched URL regexp. python regexp."
   :type 'string)
 
-(defcustom auto-browser-web-ai-session-selector ".session"
+(defcustom auto-browser-chat-ai-session-selector ".session"
  "The selector of the session element."
  :type 'string)
 
 ;;; Internal Variables:
-(defvar auto-browser-web-ai-default-callback nil)
+(defvar auto-browser-chat-ai-default-callback nil)
 
-(defun auto-browser-web-ai-input (&optional prompt callback session)
+(defun auto-browser-chat-ai-input (&optional prompt callback session)
   "Send Input string to Web AI."
   (interactive)
   (unless prompt
     (setq prompt (read-string "Input your prompt: ")))
   (unless callback
-    (setq callback #'auto-browser-web-ai-save-answer))
+    (setq callback #'auto-browser-chat-ai-save-answer))
   (unless session
     (setq session 0))
   (auto-browser-run-linearly
-   `((auto-browser-get-tab ,auto-browser-web-ai-url t)
-     (auto-browser-locate-element auto-browser-web-ai-session-selector ,session)
+   `((auto-browser-get-tab ,auto-browser-chat-ai-url t)
+     (auto-browser-locate-element auto-browser-chat-ai-session-selector ,session)
      (auto-browser-click)
      (auto-browser-run-util-js "scroll_to_bottom.js")
      (auto-browser-wait-response ".*completions" ,(symbol-name callback))
      (auto-browser-locate-element ".n-input__textarea-el")
      (auto-browser-input ,prompt t))))
 
-(defun auto-browser-web-ai-render (traceId html)
-  (funcall auto-browser-web-ai-default-callback html))
+(defun auto-browser-chat-ai-render (traceId html)
+  (funcall auto-browser-chat-ai-default-callback html))
 
-(defun auto-browser-web-ai-save-file-name ()
+(defun auto-browser-chat-ai-save-file-name ()
   (concat (file-name-concat auto-browser-save-directory
                             (format-time-string "%y%m%d#%H%M%S"))
           ".md"))
 
-(defun auto-browser-web-ai-data-parse (data)
+(defun auto-browser-chat-ai-data-parse (data)
   (let* ((prefix "data: ")
          (lines (split-string data "\n" t))
          (json-str (nth (- (length lines) 2) lines))
@@ -92,24 +92,24 @@
          (text (gethash "aiText" (gethash "data" json))))
     text))
 
-(defun auto-browser-web-ai-save-answer (data)
-  (with-current-buffer (find-file-noselect (auto-browser-web-ai-save-file-name))
+(defun auto-browser-chat-ai-save-answer (data)
+  (with-current-buffer (find-file-noselect (auto-browser-chat-ai-save-file-name))
     (erase-buffer)
-    (insert (auto-browser-web-ai-data-parse data))
+    (insert (auto-browser-chat-ai-data-parse data))
     (save-buffer)
     (switch-to-buffer (current-buffer))))
 
-  ;; (with-current-buffer (find-file-noselect (auto-browser-web-ai-save-file-name))
+  ;; (with-current-buffer (find-file-noselect (auto-browser-chat-ai-save-file-name))
   ;;   (erase-buffer)
   ;;   (insert html)
   ;;   (save-buffer)
   ;;   (shr-render-buffer (current-buffer)))
 
-(defun auto-browser-web-ai-copy-answer (data)
-  (kill-new (auto-browser-web-ai-data-parse data)))
+(defun auto-browser-chat-ai-copy-answer (data)
+  (kill-new (auto-browser-chat-ai-data-parse data)))
 
-(defun auto-browser-web-ai-insert-answer (data)
-  (insert (auto-browser-web-ai-data-parse data)))
+(defun auto-browser-chat-ai-insert-answer (data)
+  (insert (auto-browser-chat-ai-data-parse data)))
 
-(provide 'web-ai)
-;;; web-ai.el ends here
+(provide 'ab-chat-ai)
+;;; ab-chat-ai.el ends here

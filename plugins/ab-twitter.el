@@ -1,4 +1,4 @@
-;;; twitter.el ---                                   -*- lexical-binding: t; -*-
+;;; ab-twitter.el ---                                   -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2025  Qiqi Jin
 
@@ -89,7 +89,6 @@
   (let ((prop '(:background "#ADD8E6" :extend t)))
     (text-property-search-forward 'face prop)))
 
-
 (defun auto-browser-twitter--tweet-dom-selectedp (dom)
   (string-match "r-ukrunq" (dom-attr dom 'class)))
 
@@ -132,10 +131,9 @@
      (auto-browser-twitter-tweets-html
       (auto-browser-twitter-html-parse html))
      auto-browser-twitter--buffer-name)
-    (twitter-list-mode)
+    (ab-twitter-list-mode)
     (auto-browser-jump-to-shr-text-background)
     (recenter)))
-
 
 (defun auto-browser-twitter-tweets-html (tweets)
   (string-join
@@ -156,7 +154,7 @@
     tweets)
    "\n"))
 
-(define-minor-mode twitter-list-mode "An twitter list mode"
+(define-minor-mode ab-twitter-list-mode "An twitter list mode"
   :keymap
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "j") 'auto-browser-twitter-next-tweet)
@@ -164,7 +162,5 @@
     (define-key map (kbd "<RET>") 'auto-browser-twitter-tweet-detail)
     map))
 
-
-
-(provide 'twitter)
-;;; twitter.el ends here
+(provide 'ab-twitter)
+;;; ab-twitter.el ends here
