@@ -26,6 +26,7 @@
 
 (require 'auto-browser)
 (require 'auto-browser-ctable)
+(require 'auto-browser-vui)
 (require 'auto-browser-db)
 
 ;;; Custom Variables
@@ -68,6 +69,9 @@ to look up values and WIDTH-RATIO scales column width relative to window."
 (defvar ab-bilibili--default-handle #'ab-bilibili--ctable-render
   "Default handler function for rendering Bilibili video data.")
 
+(defvar ab-bilibili--vui-instance nil
+  "Cached VUI component instance for the Bilibili table, reused across renders.")
+
 ;;; Internal Functions
 
 (defun ab-bilibili--ctable-sort (column)
@@ -76,6 +80,30 @@ to look up values and WIDTH-RATIO scales column width relative to window."
    :sort-idx
    (cl-position-if #'(lambda (key) (equal key (intern column)))
                    (mapcar #'car ab-bilibili-ctable-header))))
+
+(defun ab-bilibili--vui-render (items)
+  "Render Bilibili items in the auto-browser ctable buffer."
+  (with-current-buffer (get-buffer-create "*auto-browser-bilibili*")
+    (switch-to-buffer (current-buffer))
+    (if ab-bilibili--vui-instance
+        (vui-update-props ab-bilibili--vui-instance
+                          (list
+                           :buffer-name "*auto-browser-bilibili*"
+                           :title "Bilibili"
+                           :id-key 'url
+                           :name 'ab-bilibili
+                           :headers ab-bilibili-ctable-header
+                           :table items
+                           :actions #'ab-bilibili-vui-actions))
+      (setq ab-bilibili--vui-instance
+            (auto-browser-vui-render
+             :buffer-name "*auto-browser-bilibili*"
+             :title "Bilibili"
+             :id-key 'url
+             :name 'ab-bilibili
+             :headers ab-bilibili-ctable-header
+             :table items
+             :actions #'ab-bilibili-vui-actions)))))
 
 (defun ab-bilibili--ctable-render (items)
   "Render Bilibili items in the auto-browser ctable buffer."
@@ -151,7 +179,7 @@ using `auto-browser-ctable-render'. Clicking a row opens the video URL."
   "Update and display Bilibili dynamic videos from the database in a formatted table."
   (interactive)
   (ab-bilibili-db-check-videos)
-  (ab-bilibili--ctable-render
+  (ab-bilibili--vui-render
    (mapcar (lambda (item)
              (let ((table (make-hash-table)))
                (puthash 'url (nth 0 item) table)
@@ -187,6 +215,12 @@ using `auto-browser-ctable-render'. Clicking a row opens the video URL."
               (url (gethash 'url item)))
     url))
 
+(defun ab-bilibili--mark-read (urls)
+  "Mark each URL in URLS as read in the database and refresh the displayed video list."
+  (let ((sql (string-join (mapcar (lambda (url) (format ab-bilibili-update-sql url)) urls))))
+    (auto-browser-db-execute sql)
+    (ab-bilibili-db-videos)))
+
 (defun ab-bilibili-ctable-mark-read (&optional url)
   "Mark the selected Bilibili video as read in the database and refresh the displayed video list."
   (interactive)
@@ -212,6 +246,16 @@ using `auto-browser-ctable-render'. Clicking a row opens the video URL."
   "Prompt for a column from the Bilibili table header and sort the list based on the selection."
   (interactive)
   (ab-bilibili--ctable-sort (completing-read "Sort by: " ab-bilibili-ctable-header)))
+
+(defun ab-bilibili-vui-actions (rows)
+  "Actions for Auto Browser Bilibili Vui Table."
+  (transient-define-prefix ab-bilibili-vui-actions-run ()
+    "Actions for Auto Browser Bilibili."
+    ["Auto Browser Bilibili"
+     ("o" "Open in Browser" (lambda () (interactive) (ab-bilibili-ctable-open (gethash 'url (car rows)))))
+     ("p" "Play the video" (lambda () (interactive) (ab-bilibili-ctable-play (gethash 'url (car rows)))))
+     ("m" "Mark as Read" (lambda () (interactive) (ab-bilibili--mark-read (mapcar (lambda (row) (gethash 'url row)) rows))))])
+  (ab-bilibili-vui-actions-run))
 
 (transient-define-prefix ab-bilibili-ctable-actions ()
   "Actions for Auto Browser Bilibili Ctable."
