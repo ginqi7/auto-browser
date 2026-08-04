@@ -54,7 +54,9 @@ otherwise pass just ROW as a single-element list."
    actions
    (if selected
        (cl-remove-if-not (lambda (row) (member (gethash id-key row) selected)) table)
-     (list row))))
+     (list row)))
+  (sit-for 1)
+  (vui-set-state :selected nil))
 
 (cl-defun auto-browser-vui--to-row (&key headers selected actions table id-key row)
   "Build a vui row from ROW using HEADERS, SELECTED, ACTIONS, TABLE, and ID-KEY.

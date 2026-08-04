@@ -217,9 +217,8 @@ using `auto-browser-ctable-render'. Clicking a row opens the video URL."
 
 (defun ab-bilibili--mark-read (urls)
   "Mark each URL in URLS as read in the database and refresh the displayed video list."
-  (let ((sql (string-join (mapcar (lambda (url) (format ab-bilibili-update-sql url)) urls))))
-    (auto-browser-db-execute sql)
-    (ab-bilibili-db-videos)))
+  (mapc #'auto-browser-db-execute (mapcar (lambda (url) (format ab-bilibili-update-sql url)) urls))
+  (ab-bilibili-db-videos))
 
 (defun ab-bilibili-ctable-mark-read (&optional url)
   "Mark the selected Bilibili video as read in the database and refresh the displayed video list."
@@ -255,6 +254,7 @@ using `auto-browser-ctable-render'. Clicking a row opens the video URL."
      ("o" "Open in Browser" (lambda () (interactive) (ab-bilibili-ctable-open (gethash 'url (car rows)))))
      ("p" "Play the video" (lambda () (interactive) (ab-bilibili-ctable-play (gethash 'url (car rows)))))
      ("m" "Mark as Read" (lambda () (interactive) (ab-bilibili--mark-read (mapcar (lambda (row) (gethash 'url row)) rows))))])
+
   (ab-bilibili-vui-actions-run))
 
 (transient-define-prefix ab-bilibili-ctable-actions ()
