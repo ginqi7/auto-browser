@@ -58,28 +58,31 @@
   "SQL template for marking a Bilibili video as read in the database."
   :type 'string)
 
-(defcustom ab-bilibili-ctable-header '((author . 0.3) (title . 0.5) (date . 0.2))
+(defcustom ab-bilibili-ctable-header '((author . (:on-click (lambda (id value) (ab-bilibili-vui-filter 'author value))))
+                                       (title . (:on-click (lambda (id value) (ab-bilibili-vui-actions id))))
+                                       (date . (:sorted t :reversed t)))
   "Table header configuration for Bilibili video list.
 Each element is (COLUMN-KEY . WIDTH-RATIO) where COLUMN-KEY is used
-to look up values and WIDTH-RATIO scales column width relative to window."
-  :type '(repeat (cons symbol number)))
+to look up values and WIDTH-RATIO scales column width relative to window.")
 
 ;;; Internal Variables
+
+(defun ab-bilibili-vui-filter (key value)
+  (let* ((props (vui-instance-props auto-browser-vui--instance))
+         (table (plist-get props :table)))
+    (vui-update-props
+     auto-browser-vui--instance
+     (plist-put props
+                :table
+                (auto-browser-vui-filter-by key value table)))))
 
 (defvar ab-bilibili--default-handle #'ab-bilibili--ctable-render
   "Default handler function for rendering Bilibili video data.")
 
-(defvar ab-bilibili--vui-instance nil
+(defvar-local ab-bilibili--vui-instance nil
   "Cached VUI component instance for the Bilibili table, reused across renders.")
 
 ;;; Internal Functions
-
-(defun ab-bilibili--ctable-sort (column)
-  "Sort the Bilibili ctable by the specified column name."
-  (auto-browser-ctable-sort
-   :sort-idx
-   (cl-position-if #'(lambda (key) (equal key (intern column)))
-                   (mapcar #'car ab-bilibili-ctable-header))))
 
 (defun ab-bilibili--vui-render (items)
   "Render Bilibili items in the auto-browser ctable buffer."
@@ -207,14 +210,6 @@ using `auto-browser-ctable-render'. Clicking a row opens the video URL."
        (auto-browser-get-elements "html")
        (ab-bilibili--htmls-parse)))))
 
-(defun ab-bilibili--ctable-get-url ()
-  "Retrieve the URL of the currently selected Bilibili entry from the ctable component by extracting it from the data hash table in the selected row."
-  (when-let* ((cp (ctbl:cp-get-component))
-              (row (ctbl:cp-get-selected-data-row cp))
-              (item (car (last row)))
-              (url (gethash 'url item)))
-    url))
-
 (defun ab-bilibili--mark-read (urls)
   "Mark each URL in URLS as read in the database and refresh the displayed video list."
   (mapc #'auto-browser-db-execute (mapcar (lambda (url) (format ab-bilibili-update-sql url)) urls))
@@ -241,29 +236,16 @@ using `auto-browser-ctable-render'. Clicking a row opens the video URL."
   (start-process "*ab-bilibili-play*" nil ab-bilibili-play-command url)
   (ab-bilibili-ctable-mark-read url))
 
-(defun ab-bilibili-ctable-sort ()
-  "Prompt for a column from the Bilibili table header and sort the list based on the selection."
-  (interactive)
-  (ab-bilibili--ctable-sort (completing-read "Sort by: " ab-bilibili-ctable-header)))
-
-(defun ab-bilibili-vui-actions (rows)
+(defun ab-bilibili-vui-actions (url)
   "Actions for Auto Browser Bilibili Vui Table."
   (transient-define-prefix ab-bilibili-vui-actions-run ()
     "Actions for Auto Browser Bilibili."
     ["Auto Browser Bilibili"
-     ("o" "Open in Browser" (lambda () (interactive) (ab-bilibili-ctable-open (gethash 'url (car rows)))))
-     ("p" "Play the video" (lambda () (interactive) (ab-bilibili-ctable-play (gethash 'url (car rows)))))
-     ("m" "Mark as Read" (lambda () (interactive) (ab-bilibili--mark-read (mapcar (lambda (row) (gethash 'url row)) rows))))])
+     ("o" "Open in Browser" (lambda () (interactive) (ab-bilibili-ctable-open url)))
+     ("p" "Play the video" (lambda () (interactive) (ab-bilibili-ctable-play url)))
+     ("m" "Mark as Read" (lambda () (interactive) (ab-bilibili--mark-read url)))])
 
   (ab-bilibili-vui-actions-run))
-
-(transient-define-prefix ab-bilibili-ctable-actions ()
-  "Actions for Auto Browser Bilibili Ctable."
-  ["Auto Browser Bilibili"
-   ("o" "Open in Browser" ab-bilibili-ctable-open)
-   ("p" "Play the video" ab-bilibili-ctable-play)
-   ("m" "Mark as Read" ab-bilibili-ctable-mark-read)
-   ("s" "Sort Rows" ab-bilibili-ctable-sort)])
 
 (provide 'ab-bilibili)
 ;;; ab-bilibili.el ends here
