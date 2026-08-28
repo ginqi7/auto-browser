@@ -58,7 +58,7 @@
   :type 'string)
 
 (defcustom ab-bilibili-header '((author . (:on-click (lambda (id value) (ab-bilibili-vui-filter 'author value))))
-                                (title . (:on-click (lambda (id value) (ab-bilibili-vui-actions id))))
+                                (title)
                                 (date . (:sorted t :reversed t)))
   "Table header configuration for Bilibili video list.
 Each element is (COLUMN-KEY . WIDTH-RATIO) where COLUMN-KEY is used
@@ -86,26 +86,14 @@ to look up values and WIDTH-RATIO scales column width relative to window.")
 (defun ab-bilibili--vui-render (items)
   ""
   (with-current-buffer (get-buffer-create "*auto-browser-bilibili*")
-    (switch-to-buffer (current-buffer))
-    (if ab-bilibili--vui-instance
-        (vui-update-props ab-bilibili--vui-instance
-                          (list
-                           :buffer-name "*auto-browser-bilibili*"
-                           :title "Bilibili"
-                           :id-key 'url
-                           :name 'ab-bilibili
-                           :headers ab-bilibili-header
-                           :table items
-                           :actions #'ab-bilibili-vui-actions))
-      (setq ab-bilibili--vui-instance
-            (auto-browser-vui-render
-             :buffer-name "*auto-browser-bilibili*"
-             :title "Bilibili"
-             :id-key 'url
-             :name 'ab-bilibili
-             :headers ab-bilibili-header
-             :table items
-             :actions #'ab-bilibili-vui-actions)))))
+    (setq auto-browser-vui-selected-actions #'ab-bilibili-vui-actions)
+    (auto-browser-vui-render
+     :buffer-name "*auto-browser-bilibili*"
+     :title "Bilibili"
+     :id-key 'url
+     :name 'ab-bilibili
+     :headers ab-bilibili-header
+     :table items)))
 
 (defun ab-bilibili--db-insert-videos (items)
   "Insert a list of Bilibili video items into the database."
@@ -194,8 +182,10 @@ to look up values and WIDTH-RATIO scales column width relative to window.")
 
 (defun ab-bilibili--mark-read (urls)
   "Mark each URL in URLS as read in the database and refresh the displayed video list."
-  (mapc #'auto-browser-db-execute (mapcar (lambda (url) (format ab-bilibili-update-sql url)) urls))
-  (ab-bilibili-db-videos))
+  (let ((point (point)))
+    (mapc #'auto-browser-db-execute (mapcar (lambda (url) (format ab-bilibili-update-sql url)) urls))
+    (ab-bilibili-db-videos)
+    (goto-char point)))
 
 (defun ab-bilibili-mark-read (&optional url)
   "Mark the selected Bilibili video as read in the database and refresh the displayed video list."
@@ -228,7 +218,8 @@ to look up values and WIDTH-RATIO scales column width relative to window.")
       (lambda () (interactive)
         (if auto-browser-vui--selected
             (ab-bilibili--mark-read auto-browser-vui--selected)
-          (ab-bilibili--mark-read (list url)))))])
+          (ab-bilibili--mark-read (list url)))
+        (setq auto-browser-vui--selected nil)))])
 
   (ab-bilibili-vui-actions-run))
 
